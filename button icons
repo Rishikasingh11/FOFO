@@ -1,0 +1,80 @@
+// Renders the two radio buttons with blue circular icons and numbers
+<label
+    key={num}
+    className="custom-radio-numbered"
+    style={{ cursor: 'pointer' }}
+>
+    <input
+        type="radio"
+        name={`deal-radio-${num}`}
+        value={num}
+        checked={
+            (num === 1 && selectedDeal1 && selectedDeal1.id === params.data.id) ||
+            (num === 2 && selectedDeal2 && selectedDeal2.id === params.data.id)
+        }
+        onChange={() => {
+            if (num === 1) setSelectedDeal1(params.data);
+            else setSelectedDeal2(params.data);
+        }}
+        style={{ display: 'none' }}
+    />
+    <span className="custom-radio-circle">{num}</span>
+</label>
+
+
+
+// Renders the single radio button with blue circular icon and number for each slot
+<label
+    className="custom-radio-numbered"
+    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }}
+>
+    <input
+        type="radio"
+        name="top-radio"
+        value={number}
+        checked
+        readOnly
+        style={{ display: 'none' }}
+    />
+    <span className="custom-radio-circle">{number}</span>
+</label>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.custom-radio-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #1976d2;
+  border-radius: 50%;
+  background: #fff;
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+
+
+
+.custom-radio-numbered input[type="radio"]:checked + .custom-radio-circle {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px #90caf9;
+}
