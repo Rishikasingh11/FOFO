@@ -1,25 +1,40 @@
-// Renders the two radio buttons with blue circular icons and numbers
-<label
-    key={num}
-    className="custom-radio-numbered"
-    style={{ cursor: 'pointer' }}
->
-    <input
-        type="radio"
-        name={`deal-radio-${num}`}
-        value={num}
-        checked={
-            (num === 1 && selectedDeal1 && selectedDeal1.id === params.data.id) ||
-            (num === 2 && selectedDeal2 && selectedDeal2.id === params.data.id)
-        }
-        onChange={() => {
-            if (num === 1) setSelectedDeal1(params.data);
-            else setSelectedDeal2(params.data);
-        }}
-        style={{ display: 'none' }}
-    />
-    <span className="custom-radio-circle">{num}</span>
-</label>
+{
+            headerName: '',
+            field: 'dealRadioButtons',
+            minWidth: 80,
+            flex: 0.4,
+            cellRenderer: (params) => {
+                if (params.data.isCommentRow) return null;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                        {[1, 2].map((num) => (
+                            <label
+                                key={num}
+                                className="custom-radio-numbered"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <input
+                                    type="radio"
+                                    name={`deal-radio-${num}`}
+                                    value={num}
+                                    checked={
+                                        (num === 1 && selectedDeal1 && selectedDeal1.id === params.data.id) ||
+                                        (num === 2 && selectedDeal2 && selectedDeal2.id === params.data.id)
+                                    }
+                                    onChange={() => {
+                                        if (num === 1) setSelectedDeal1(params.data);
+                                        else setSelectedDeal2(params.data);
+                                    }}
+                                    style={{ display: 'none' }}
+                                />
+                                <span className="custom-radio-circle">{num}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+            },
+        },
+
 
 
 
