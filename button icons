@@ -1,35 +1,23 @@
-/* Custom radio button with number inside */
-.custom-radio-numbered {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  height: 28px;
-  width: 28px;
-}
-.custom-radio-numbered input[type="radio"] {
-  display: none;
-}
-.custom-radio-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid #1976d2;
-  border-radius: 50%;
-  background: #fff;
-  color: #1976d2;
-  font-weight: bold;
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
-  user-select: none;
-}
-.custom-radio-numbered input[type="radio"]:checked + .custom-radio-circle {
-  background: #1976d2;
-  color: #fff;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 2px #90caf9;
-}
+{
+            headerName: 'Type',
+            field: 'type',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return ControlsRowCell(params);
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('type') ? 'highlight-diff' : ''}>{parts[0] || ''}</span>;
+            },
+            colSpan: params => params.data.isControlRow ? 12 : 1
+        },
+        {
+            headerName: 'Office',
+            field: 'office',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('office') ? 'highlight-diff' : ''}>{parts.slice(1).join(' ')}</span>;
+            }
+        },
