@@ -23,3 +23,69 @@
   }
 />
 
+
+
+import React, { useEffect, useState } from 'react';
+// NEW: Added import to read URL query parameters
+import { useLocation } from 'react-router-dom'; // NEW
+import Container from 'react-bootstrap/Container';
+import { getAllDealsData } from '../../components/common/http-api-service';
+import ManualMatchingFoFOGrid from '../../components/AgGrid/ManualMatchingFOFo/ManualMatchingFOFOGrid';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const ManualMatchingFOFO = () => {
+  // NEW: Get current location to read URL query params
+  const location = useLocation(); // NEW
+  // NEW: Extract the "typeOperation" parameter from URL (?typeOperation=F or ?typeOperation=B)
+  const queryParams = new URLSearchParams(location.search); // NEW
+  const typeOperation = queryParams.get('typeOperation'); // NEW: Will be 'F' or 'B'
+
+  const [dealsData, setDealsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getAllDealsData(); // You can update this based on FO/BO if needed
+        setDealsData(response);
+      } catch (error) {
+        setDealsData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <Container fluid className="mt-3 manual-matching-fofo">
+      {loading ? (
+        <p className="text-center my-5">Chargement des données...</p>
+      ) : (
+        <>
+          {/* NEW: Condition for Front Office */}
+          {typeOperation === 'F' && ( // NEW
+            <>
+              <h5>Manual Matching FOFO</h5> {/* NEW */}
+              <ManualMatchingFoFOGrid dealsData={dealsData} />
+            </>
+          )}
+          {/* NEW: Condition for Back Office */}
+          {typeOperation === 'B' && ( // NEW
+            <>
+              <h5>Manual Matching BOBO</h5> {/* NEW */}
+              <ManualMatchingFoFOGrid dealsData={dealsData} />
+            </>
+          )}
+          {/* NEW: Fallback if query param is missing */}
+          {!typeOperation && ( // NEW
+            <p className="text-danger text-center">typeOperation parameter missing</p> // NEW
+          )}
+        </>
+      )}
+    </Container>
+  );
+};
+
+export default ManualMatchingFOFO;
+
