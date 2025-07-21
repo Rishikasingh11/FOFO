@@ -1,0 +1,16 @@
+<NavDropdown.Item
+  className="navbar-item"
+  as={Link}
+  to="/quitus/change/matchingOrphelin?typeOperation=F"
+>
+  Manual Matching FOFO
+</NavDropdown.Item>
+
+<NavDropdown.Item
+  className="navbar-item"
+  as={Link}
+  to="/quitus/change/matchingOrphelin?typeOperation=B"
+>
+  Manual Matching BOBO
+</NavDropdown.Item>
+
