@@ -89,3 +89,5 @@ const ManualMatchingFOFO = () => {
 
 export default ManualMatchingFOFO;
 
+const typeOperation = queryParams.get('typeOperation') || 'F';
+
