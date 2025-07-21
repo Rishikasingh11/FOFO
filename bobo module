@@ -15,3 +15,11 @@
 </NavDropdown.Item>
 
 <Route path="/quitus/change/matchingOrphelin" element={<ManuelMatchingFOFO />} />
+
+<Route
+  path="/quitus/change/matchingOrphelin"
+  element={
+    <ManuelMatchingFOFO key={window.location.search} />
+  }
+/>
+
