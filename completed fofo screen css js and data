@@ -1,0 +1,1024 @@
+jsx
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Container, Stack, Popover, OverlayTrigger } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+import { AgGridReact } from 'ag-grid-react';
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import { ModuleRegistry } from 'ag-grid-community';
+import { ClientSideRowModelModule, ColumnAutoSizeModule } from 'ag-grid-community';
+import { QuestionCircleFill } from 'react-bootstrap-icons';
+
+ModuleRegistry.registerModules([
+    ClientSideRowModelModule,
+    ColumnAutoSizeModule,
+]);
+
+const gridOptions = {
+    getRowStyle: params => {
+        if (params.node.rowIndex % 4 < 2) {
+            return { 'background': '#f2f2f2' };
+        } else {
+            return { 'background': '#ffffff' };
+        }
+    },
+};
+
+const justificatifOptions = [
+    '[Sélectionner un justificatif]',
+    'deal présent en FO mais absent en BO',
+    'deal présent en BO mais absent en FO',
+    'erreur de sens',
+    'marge négative',
+    'erreur de cours',
+    'divers',
+    'tickets FO saisi sans marge',
+    'orphelin FO non justifié',
+    'écart de montants entre FO et BO',
+    'CAT avec spot de couverture à une patte nulle',
+    'matching manuel sans écart',
+    'rompu sur ordre groupé',
+    'insert/delete pour insérer les données clients',
+];
+
+const DealsTable = () => {
+    const totalDeals = 28;
+    const [dealsData, setDealsData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedDeal1, setSelectedDeal1] = useState(null);
+    const [selectedDeal2, setSelectedDeal2] = useState(null);
+
+    useEffect(() => {
+        setLoading(true);
+        fetch(process.env.PUBLIC_URL + '/dealsData.json')
+            .then((res) => res.json())
+            .then((data) => {
+                setDealsData(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const expandedDealsData = useMemo(() => {
+        if (!dealsData || dealsData.length === 0) return [];
+        const rows = [];
+        for (let i = 0; i < dealsData.length; i++) {
+            rows.push({ ...dealsData[i], isCommentRow: false });
+            rows.push({
+                id: `${dealsData[i].id}-comment`,
+                isCommentRow: true,
+                commentaire: dealsData[i].commentaire,
+                reference: dealsData[i].reference,
+            });
+        }
+        return rows;
+    }, [dealsData]);
+
+    const columnDefs = useMemo(() => [
+        {
+            headerName: '',
+            field: 'dealRadioButtons',
+            minWidth: 80,
+            flex: 0.4,
+            cellRenderer: (params) => {
+                if (params.data.isCommentRow) return null;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                        {[1, 2].map((num) => (
+                            <label
+                                key={num}
+                                className="custom-radio-numbered"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <input
+                                    type="radio"
+                                    name={`deal-radio-${num}`}
+                                    value={num}
+                                    checked={
+                                        (num === 1 && selectedDeal1 && selectedDeal1.id === params.data.id) ||
+                                        (num === 2 && selectedDeal2 && selectedDeal2.id === params.data.id)
+                                    }
+                                    onChange={() => {
+                                        if (num === 1) setSelectedDeal1(params.data);
+                                        else setSelectedDeal2(params.data);
+                                    }}
+                                    style={{ display: 'none' }}
+                                />
+                                <span className="custom-radio-circle">{num}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+            },
+        },
+        {
+            headerName: 'Type',
+            field: 'type',
+            minWidth: 100,
+            flex: 1,
+            cellClass: (params) =>
+              params.data.isCommentRow ? 'comment-row' : 'ag-master-cell',
+            colSpan: (params) => 1,
+            cellRenderer: (params) => {
+              if (params.data.isCommentRow) return null;
+              const parts = (params.data.type || '').split(' ');
+              return <span>{parts[0] || ''}</span>;
+            },
+        },
+        {
+            headerName: 'Office',
+            field: 'office',
+            minWidth: 100,
+            flex: 1,
+            cellClass: (params) => params.data.isCommentRow ? 'comment-row' : '',
+            colSpan: (params) => 1,
+            cellRenderer: (params) => {
+                if (params.data.isCommentRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span>{parts.slice(1).join(' ')}</span>;
+            },
+        },
+        {
+            headerName: 'Reference',
+            field: 'reference',
+            minWidth: 100,
+            flex: 1,
+            cellClass: (params) => params.data.isCommentRow ? 'comment-row' : 'cell-pre-line',
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Contrepartie',
+            field: 'contrepartie',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Date de Valeur',
+            field: 'dateValeur',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Montant Achat',
+            field: 'montantAchat',
+            cellClass: (params) =>
+              params.data.isCommentRow ? 'cell-text-right' : 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => params.data.isCommentRow ? 8 : 1,
+            cellRenderer: (params) => {
+              if (params.data.isCommentRow) {
+                return (
+                  <span className="comment-text">
+                    <strong>Commentaire:</strong> {params.data.commentaire || <span className="text-muted">Aucun commentaire</span>}
+                  </span>
+                );
+              }
+              return params.value;
+            },
+          },
+        {
+            headerName: 'Montant Vendu',
+            field: 'montantVendu',
+            cellClass: 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Cours client',
+            field: 'coursClient',
+            cellClass: 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Montant de base Achat',
+            field: 'montantBaseAchat',
+            cellClass: 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Montant de base Vendu',
+            field: 'montantBaseVendu',
+            cellClass: 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: 'Cours base',
+            field: 'coursBase',
+            cellClass: 'cell-text-right',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: "Date d'import",
+            field: 'etatDateImport',
+            cellClass: 'cell-pre-line',
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+            cellRenderer: (params) => params.data.isCommentRow ? null : params.value,
+        },
+    ], [selectedDeal1, selectedDeal2]);
+
+    const defaultColDef = useMemo(() => ({
+        sortable: false,
+        filter: false,
+        resizable: true,
+        suppressSizeToFit: false,
+        autoSize: true
+    }), []);
+
+    const autoGroupColumnDef = useMemo(() => ({
+        minWidth: 100,
+        flex: 1,
+        suppressSizeToFit: false
+    }), []);
+
+    const gridRef = useRef();
+
+    const popover = (
+        <Popover id="popover" className="legend-popover">
+            <Popover.Body className="px-3 pt-0">
+                <ul>
+                    <li>CC: Change comptant</li>
+                    <li>TC: Change à terme - spot de couverture</li>
+                    <li>TT: Change à terme - partie terme</li>
+                    <li>SW: Swap de change - spot de couverture</li>
+                    <li>GC: Ordre groupe - change comptant</li>
+                    <li>GT: Ordre groupe - change à terme</li>
+                    <li>TF: Transfert</li>
+                    <li>N: Nominal saisie</li>
+                </ul>
+            </Popover.Body>
+        </Popover>
+    );
+
+    const topGridRows = [
+        selectedDeal1 ? { ...selectedDeal1, id: 'slot1', isControlRow: false } : {
+            id: 'placeholder-1',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        },
+        selectedDeal2 ? { ...selectedDeal2, id: 'slot2', isControlRow: false } : {
+            id: 'placeholder-2',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        }
+    ];
+
+    const ControlsRowCell = (params) => {
+        const [localDropdown, setLocalDropdown] = useState('[Sélectionner un justificatif]');
+        const [localValue, setLocalValue] = useState('');
+        const textareaRef = useRef();
+        useEffect(() => { if (textareaRef.current) textareaRef.current.focus(); }, []);
+        if (!params.data.isControlRow) return params.value;
+
+        const effacerMatch = () => {
+            setSelectedDeal1(null);
+            setSelectedDeal2(null);
+        };
+        const createMatch = () => {
+            if (!selectedDeal1 || !selectedDeal2) {
+                alert("Veuillez sélectionner deux deals pour le matching.");
+                return;
+            }
+            if (selectedDeal1.reference === selectedDeal2.reference) {
+                alert("Les 2 deals doivent être différents.");
+                return;
+            }
+            if (selectedDeal1.id === selectedDeal2.id) {
+                if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
+                    alert("Le matching est déjà créé.");
+                }
+                return;
+            }
+            if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
+                // alert("Le matching a été créé."); // [2024-07-01 17:10 IST] Removed as per user request
+            }
+        };
+        const isCreateEnabled = localDropdown !== '[Sélectionner un justificatif]' && localValue.trim() !== '';
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 24,
+                background: '#f8f9fa',
+                padding: '20px 16px',
+                borderRadius: 6,
+                border: '1px solid #e0e0e0',
+                margin: 0,
+                width: '100%'
+            }}>
+                <div style={{ minWidth: 220, flex: 1 }}>
+                    <label className="fw-bold mb-1">Justificatif</label>
+                    <select
+                        className="form-select"
+                        value={localDropdown}
+                        onChange={e => setLocalDropdown(e.target.value)}
+                    >
+                        {justificatifOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                    </select>
+                </div>
+                <div style={{ minWidth: 350, flex: 2 }}>
+                    <label className="fw-bold mb-1">Commentaire</label>
+                    <textarea
+                        ref={textareaRef}
+                        className="form-control"
+                        rows={3}
+                        placeholder="Commentaire"
+                        value={localValue}
+                        onChange={e => setLocalValue(e.target.value)}
+                        style={{ minWidth: 300, resize: 'vertical', marginBottom: 12 }}
+                    />
+                    <div className="d-flex gap-2 justify-content-end mt-2">
+                        <button
+                            className="btn btn-danger btn-sm"
+                            type="button"
+                            onClick={createMatch}
+                            disabled={!isCreateEnabled}
+                        >
+                            Créer Matching
+                        </button>
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            onClick={() => {
+                                setLocalValue('');
+                                setLocalDropdown('[Sélectionner un justificatif]');
+                                effacerMatch();
+                            }}
+                        >
+                            Effacer la sélection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const NullCell = (params) => params.data.isControlRow ? null : params.value;
+
+    const highlightDiff = (field) => {
+        if (!selectedDeal1 || !selectedDeal2) return false;
+        if (selectedDeal1.id === selectedDeal2.id) return false;
+        return selectedDeal1[field] !== selectedDeal2[field];
+    };
+
+    const topGridColumnDefs = [
+        {
+            headerName: '',
+            field: 'radioButtons',
+            minWidth: 60,
+            flex: 0.3,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const isFirstRow = params.data.id === 'slot1' || params.data.id === 'placeholder-1';
+                const isSecondRow = params.data.id === 'slot2' || params.data.id === 'placeholder-2';
+                if (!isFirstRow && !isSecondRow) return null;
+                const number = isFirstRow ? '1' : '2';
+                return (
+                    <label
+                        className="custom-radio-numbered"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }}
+                    >
+                        <input
+                            type="radio"
+                            name="top-radio"
+                            value={number}
+                            checked
+                            readOnly
+                            style={{ display: 'none' }}
+                        />
+                        <span className="custom-radio-circle">{number}</span>
+                    </label>
+                );
+            },
+        },
+        {
+            headerName: 'Type',
+            field: 'type',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return ControlsRowCell(params);
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('type') ? 'highlight-diff' : ''}>{parts[0] || ''}</span>;
+            },
+            colSpan: params => params.data.isControlRow ? 12 : 1
+        },
+        {
+            headerName: 'Office',
+            field: 'office',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('office') ? 'highlight-diff' : ''}>{parts.slice(1).join(' ')}</span>;
+            }
+        },
+        { headerName: 'Reference', field: 'reference', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('reference') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Contrepartie', field: 'contrepartie', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('contrepartie') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Date de Valeur', field: 'dateValeur', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('dateValeur') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Montant Achat', field: 'montantAchat', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantAchat') ? 'highlight-diff' : ''}>{params.value}</span> },
+        {
+            headerName: 'Montant Vendu',
+            field: 'montantVendu',
+            minWidth: 180,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                return (
+                    <span
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', width: '100%' }}
+                        title={params.value}
+                        className={highlightDiff('montantVendu') ? 'highlight-diff' : ''}
+                    >
+                        {params.value}
+                    </span>
+                );
+            },
+        },
+        { headerName: 'Cours client', field: 'coursClient', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('coursClient') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Montant de base Achat', field: 'montantBaseAchat', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantBaseAchat') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Montant de base Vendu', field: 'montantBaseVendu', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantBaseVendu') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: 'Cours base', field: 'coursBase', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('coursBase') ? 'highlight-diff' : ''}>{params.value}</span> },
+        { headerName: "Date d'import", field: 'etatDateImport', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('etatDateImport') ? 'highlight-diff' : ''}>{params.value}</span> },
+    ];
+
+    // Helper to extract currency from 'montantVendu' (e.g., '57 000.00 USD amount sold')
+    function extractCurrency(val) {
+        if (!val) return '';
+        // Try to extract 3-letter currency code
+        const match = val.match(/([A-Z]{3})/);
+        return match ? match[1] : '';
+    }
+    const showCurrencyWarning = selectedDeal1 && selectedDeal2 && selectedDeal1.id !== selectedDeal2.id && extractCurrency(selectedDeal1.montantVendu) && extractCurrency(selectedDeal2.montantVendu) && extractCurrency(selectedDeal1.montantVendu) !== extractCurrency(selectedDeal2.montantVendu);
+
+    return (
+        <>
+            <Container fluid className="mt-3 mb-4">
+            <Stack direction="horizontal" gap={3} className="mb-2 pb-2 border-bottom align-items-center justify-content-between flex-wrap">
+                <div className="d-flex align-items-center gap-2 mb-1 mb-md-0">
+                    <OverlayTrigger
+                        trigger={['hover', 'focus']}
+                        placement="bottom"
+                        overlay={popover}
+                    >
+                        <QuestionCircleFill className="help-cursor" />
+                    </OverlayTrigger>
+                    <span>Légende</span>
+                </div>
+                </Stack>
+                <div className="ag-theme-alpine grid-container" style={{ width: '100%', minWidth: 0, overflowX: 'hidden', height: '120px' }}>
+                    <AgGridReact
+                        rowData={topGridRows}
+                        columnDefs={topGridColumnDefs}
+                        defaultColDef={{ resizable: true, flex: 1 }}
+                        headerHeight={38}
+                        rowHeight={40}
+                        suppressMovableColumns={true}
+                        suppressMenuHide={true}
+                        suppressCellFocus={true}
+                        theme={'legacy'}
+                        enableCellTextSelection={true}
+                        suppressHorizontalScroll={true}
+                        suppressColumnVirtualisation={true}
+                        suppressRowVirtualisation={true}
+                    />
+                </div>
+                <div style={{marginTop: 0, marginBottom: 12}}>
+                  <ControlsRowCell data={{isControlRow:true}} />
+                </div>
+                {showCurrencyWarning && (
+                    <div style={{ color: '#b71c1c', background: '#fff3e0', border: '1px solid #ffccbc', borderRadius: 4, padding: '8px 16px', marginTop: 8, fontWeight: 600, fontSize: 16 }}>
+                        Attention : Les 2 devises doivent être identique.
+                    </div>
+                )}
+            {/* </Container>
+
+            <Container fluid className="mt-4"> */}
+            <p className="text-muted mb-2">Nombre de deals: {totalDeals}</p>
+            {loading ? (
+                <div className="text-center my-5">Chargement des données...</div>
+            ) : (
+                    <div className="ag-theme-alpine grid-container" style={{ width: '100%', height: '390px' }}>
+                <AgGridReact
+                    ref={gridRef}
+                    rowData={expandedDealsData}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    autoGroupColumnDef={autoGroupColumnDef}
+                    pagination={true}
+                    paginationPageSize={10}
+                    enableBrowserTooltips={true}
+                    rowSelection="single"
+                    rowHeight={50}
+                    theme={'legacy'}
+                    gridOptions={gridOptions}
+                    suppressHorizontalScroll={true}
+                    suppressColumnVirtualisation={true}
+                    suppressRowVirtualisation={true}
+                />
+            </div>
+            )}
+        </Container>
+        </>
+    );
+};
+
+export default DealsTable;
+
+
+css
+
+body {
+  font-family: Arial, Helvetica, sans-serif; /* Common sans-serif */
+  font-size: 12px; /* General base font size from image */
+  background-color: #EBEBEB; /* Light gray page background */
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.app-wrapper {
+  /* Max width or specific layout constraints if needed */
+}
+
+.top-bar-text {
+  background-color: #f8f9fa; /* Very light gray, almost white */
+  color: #6c757d; /* Muted text color */
+  padding: 2px 15px;
+  font-size: 0.8em;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* --- Navbar Styling --- */
+.sg-navbar {
+  background-color: #F0F0F0 !important; /* Light greyish */
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px solid #CCCCCC;
+}
+
+.sg-brand {
+  color: #E60028 !important; /* Societe Generale Red (approximate) */
+  font-weight: bold;
+  font-size: 1.3em !important;
+  padding-left: 10px;
+}
+
+.sg-nav-link {
+  color: #333333 !important;
+  font-size: 0.9em !important;
+  padding: 0.3rem 0.8rem !important;
+  margin-right: 5px;
+}
+
+.sg-nav-link.active,
+.sg-nav-link:hover {
+  color: #E60028 !important;
+  font-weight: bold;
+}
+.sg-nav-link.active {
+    border-bottom: 2px solid #E60028;
+}
+
+
+/* --- Status Bar Styling --- */
+.status-bar {
+  background-color: #E0E0E0 !important; /* Slightly darker gray than navbar */
+  color: #000000 !important;
+  border: 1px solid #C0C0C0 !important;
+  border-radius: 0 !important; /* Sharp corners */
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.85em;
+  margin-bottom: 5px !important;
+}
+
+/* --- Grid Container --- */
+.grid-outer-container {
+  /* border: 1px solid #B0B0B0; */ /* Optional border around the grid area */
+}
+
+
+/* --- AG Grid Custom Theme: ag-theme-sg-custom --- */
+.ag-theme-sg-custom {
+  /* Overall Font */
+  --ag-font-family: Arial, Helvetica, sans-serif;
+  --ag-font-size: 11.5px; /* Font size for grid content */
+
+  /* Header Styling */
+  --ag-header-height: auto; /* Allow auto height for wrapping */
+  --ag-header-background-color: #8C001A; /* Dark Red/Maroon for headers */
+  --ag-header-foreground-color: white;
+  --ag-header-cell-padding: 5px 8px; /* Top/bottom, Left/right padding */
+  --ag-header-cell-hover-background-color: #a8001f; /* Slightly lighter on hover */
+
+  /* Borders */
+  --ag-borders: solid 1px;
+  --ag-border-color: #D0D0D0; /* Main grid border and outer cell borders */
+  --ag-row-border-style: solid;
+  --ag-row-border-width: 1px;
+  --ag-row-border-color: #E0E0E0; /* Separator lines between rows */
+  --ag-cell-horizontal-border: solid 1px #E0E0E0; /* Vertical lines between cells */
+
+  /* Cell Styling */
+  --ag-cell-horizontal-padding: 8px;
+  --ag-row-hover-color: #f0f5ff; /* Light blue hover for rows */
+  --ag-background-color: white; /* Background of the grid itself */
+  --ag-data-color: #222; /* Text color in cells */
+
+  /* Pinned Rows (for Totals) */
+  --ag-pinned-row-background-color: #D3D3D3; /* Default, overridden by getRowStyle for specific total row */
+
+  /* Suppress Menu Button */
+  --ag-header-menu-button-display: none;
+}
+
+/* Ensure header text wraps */
+.ag-theme-sg-custom .ag-header-cell-label .ag-header-cell-text {
+  white-space: normal !important;
+  line-height: 1.2;
+  padding-top: 2px; /* Fine tune padding for wrapped text */
+  padding-bottom: 2px;
+  overflow: visible;
+  text-overflow: clip;
+}
+.ag-theme-sg-custom .ag-header-group-cell-label .ag-header-group-text {
+  white-space: normal !important;
+  line-height: 1.2;
+  overflow: visible;
+  text-overflow: clip;
+  font-weight: normal; /* Group headers don't look particularly bold in image */
+}
+
+/* Style for the 'Devise' column links */
+.ag-theme-sg-custom .devise-link {
+  color: #0000EE; /* Standard link blue */
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ag-theme-sg-custom .devise-link:hover {
+  color: #00008B; /* Darker blue on hover */
+}
+/* .ag-theme-sg-custom .devise-cell {
+  background-color: #f7f7f7;
+} */
+
+
+/* Custom header group styling (if needed beyond theme vars) */
+.ag-theme-sg-custom .header-group-custom {
+  /* Specific styles for header groups if different from regular headers */
+}
+
+/* Adjust cell padding globally if defaultColDef doesn't cover it enough */
+.ag-theme-sg-custom .ag-cell {
+   padding-top: 3px;
+   padding-bottom: 3px;
+   line-height: normal; /* Let content determine height */
+   display: flex; /* For vertical alignment */
+   align-items: center; /* Vertically center content in cell */
+}
+.ag-theme-sg-custom .ag-cell.ag-right-aligned-cell { /* Ensure right aligned cells still center vertically */
+    justify-content: flex-end;
+}
+
+
+/* --- Footer Log Area --- */
+.footer-log {
+  background-color: #E0E0E0; /* Similar to status bar */
+  border-top: 1px solid #C0C0C0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 0.85em;
+}
+.footer-log h6 {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 1.05em;
+}
+.log-entries-container {
+  max-height: 100px; /* Or adjust as needed */
+  overflow-y: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Monospace for logs */
+  line-height: 1.4;
+  background-color: #FDFDFD;
+  padding: 5px;
+  border: 1px solid #C0C0C0;
+}
+.log-entry {
+  white-space: nowrap; /* Prevent log entries from wrapping */
+}
+
+
+  /* Wrap table data cell text */
+  .ag-cell {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.3;
+    height: auto !important;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  /* Ensure pre-line for cells with line breaks */
+  .cell-pre-line {
+    white-space: pre-line !important;
+    word-break: break-word;
+  }
+
+
+.ag-header-cell-label {
+    white-space: normal !important;
+    line-height: 1.2 !important;
+    word-break: break-word;
+    text-align: left;
+    justify-content: flex-start;
+    align-items: flex-start;
+    height: auto;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  
+  .ag-header-cell {
+    height: auto !important;
+    min-height: 48px !important; /* Adjust as needed */
+  }
+
+  .justificatif-row {
+    background: #f7f7f7 !important;
+    font-style: italic;
+    color: #555;
+    font-size: 0.97em;
+    text-align: left !important;
+  }
+
+.ag-header-maroon {
+  background: #b71c1c !important;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 15px;
+  border-bottom: 2px solid #a31515 !important;
+}
+.ag-cell-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom radio button with number inside */
+.custom-radio-numbered {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 28px;
+  width: 28px;
+}
+.custom-radio-numbered input[type="radio"] {
+  display: none;
+}
+.custom-radio-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #1976d2;
+  border-radius: 50%;
+  background: #fff;
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  user-select: none;
+}
+.custom-radio-numbered input[type="radio"]:checked + .custom-radio-circle {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px #90caf9;
+}
+
+.highlight-diff {
+  background-color: #ffe0e0 !important;
+}
+
+
+
+data
+[
+    {
+      "id": "3613012",
+      "type": "CC F A",
+      "reference": "3613012",
+      "contrepartie": "70788432",
+      "dateValeur": "28 Feb 2024",
+      "montantAchat": "8.63 EUR",
+      "montantVendu": "15.00 NZD N",
+      "coursClient": "1.7378180",
+      "montantBaseAchat": "8.63",
+      "montantBaseVendu": "15.00",
+      "coursBase": "1.7378180",
+      "etatDateImport": "27/03/24\n0 - \n[1827565]",
+      "commentaire": null,
+      "history": [
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "", "utilisateur": "MEHABOO1", "date": "23 Apr 2025 09:05:22" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "", "utilisateur": "MEHABOO1", "date": "23 Apr 2025 09:05:22" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "", "utilisateur": "MEHABOO1", "date": "23 Apr 2025 09:05:22" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "", "utilisateur": "MEHABOO1", "date": "23 Apr 2025 09:05:21" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "", "utilisateur": "MEHABOO1", "date": "22 Apr 2025 01:15:11" },
+        { "action": "ANNULE_SUPPRESSION", "commentaire": "test", "utilisateur": "MEHABOO1", "date": "19 Feb 2025 05:20:15" },
+        { "action": "SUPPRESSION", "commentaire": "Test deletion", "utilisateur": "MEHABOO1", "date": "18 Feb 2025 08:20:01" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "2024.06.20: QUITUS team advised: \"Team is still busy with the Java upgrade...\"", "utilisateur": "MEHABOO1", "date": "18 Feb 2025 07:53:15" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "Another comment update...", "utilisateur": "ABBONDA1", "date": "20 Jun 2024 10:57:05" }
+      ],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "21/05/25"
+      }
+    },
+    {
+      "id": "3613059",
+      "type": "CC F A",
+      "reference": "3613059",
+      "contrepartie": "70788432",
+      "dateValeur": "28 Feb 2024",
+      "montantAchat": "84,380.21 GBP N",
+      "montantVendu": "94,277.38 CHF",
+      "coursClient": "1.1172926",
+      "montantBaseAchat": "84,380.21",
+      "montantBaseVendu": "94,277.38",
+      "coursBase": "1.1172926",
+      "etatDateImport": "27/03/24\n0 - \n[1827627]",
+      "commentaire": "2024.06.20: QUITUS team advised: \"Team is still busy with the Java upgrade and multiple vulnerabilities till Sept\". Email TS: Tuesday, 11 June, 2024 11:30 AM",
+      "history": [],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "23/04/25"
+      }
+    },
+    {
+      "id": "SC076523",
+      "type": "TC F A",
+      "reference": "3706694\nSC076523",
+      "contrepartie": "",
+      "dateValeur": "02 Sep 2024",
+      "montantAchat": "2,850.12 EUR",
+      "montantVendu": "2,400.92 GBP N",
+      "coursClient": "0.8423938",
+      "montantBaseAchat": "2,850.12",
+      "montantBaseVendu": "2,400.92",
+      "coursBase": "0.8423938",
+      "etatDateImport": "03/09/24\n5 - \n[1907358]",
+      "commentaire": "2024.09.18: reminder sent / 2024.09.19: return of BO amount 681.03 will be spent at the end of the month on their usual process",
+      "history": [
+        { "action": "ANNULE_SUPPRESSION", "commentaire": "test", "utilisateur": "MEHABOO1", "date": "19 Feb 2025 05:20:15" },
+        { "action": "SUPPRESSION", "commentaire": "Test deletion", "utilisateur": "MEHABOO1", "date": "18 Feb 2025 08:20:01" },
+        { "action": "MODIF_COMMENTAIRE", "commentaire": "2024.06.20: QUITUS team advised: \"Team is still busy with the Java upgrade...\"", "utilisateur": "MEHABOO1", "date": "18 Feb 2025 07:53:15" }
+      ],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "09/04/25"
+      }
+    },
+    {
+      "id": "3706695",
+      "type": "TT F A",
+      "reference": "3706695",
+      "contrepartie": "",
+      "dateValeur": "02 Sep 2024",
+      "montantAchat": "5,887,000.00 GBP N",
+      "montantVendu": "6,988,418.01 EUR",
+      "coursClient": "0.8423938",
+      "montantBaseAchat": "5,887,000.00",
+      "montantBaseVendu": "6,988,418.01",
+      "coursBase": "0.8423938",
+      "etatDateImport": "03/09/24\n0 - \n[1907365]",
+      "commentaire": "2024.09.18: reminder sent / 2024.09.19: return of BO amount 681.03 will be spent at the end of the month on their usual process",
+      "history": [],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "05/05/25"
+      }
+    },
+    {
+      "id": "3710039",
+      "type": "CC F M",
+      "reference": "3710039",
+      "contrepartie": "70491515",
+      "dateValeur": "11 Sep 2024",
+      "montantAchat": "366.24 DKK N",
+      "montantVendu": "49.08 EUR",
+      "coursClient": "7.4621000",
+      "montantBaseAchat": "366.24",
+      "montantBaseVendu": "49.08",
+      "coursBase": "7.4621000",
+      "etatDateImport": "09/09/24\n5 - \n[1910243]",
+      "commentaire": "2024.09.10: FO deal in VAL status...",
+      "history": [],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "21/05/25"
+      }
+    },
+    {
+      "id": "3710040",
+      "type": "CC F M",
+      "reference": "3710040",
+      "contrepartie": "70491515",
+      "dateValeur": "11 Sep 2024",
+      "montantAchat": "229.94 NOK N",
+      "montantVendu": "19.22 EUR",
+      "coursClient": "11.9658000",
+      "montantBaseAchat": "229.94",
+      "montantBaseVendu": "19.22",
+      "coursBase": "11.9658000",
+      "etatDateImport": "09/09/24\n5 - \n[1910129]",
+      "commentaire": "2024.09.10: FO deal in VAL status...",
+      "history": [],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "23/04/25"
+      }
+    },
+    {
+      "id": "CC149589",
+      "type": "CC F A",
+      "reference": "3712941\nCC149589",
+      "contrepartie": "70788432",
+      "dateValeur": "18 Sep 2024",
+      "montantAchat": "4,499.44 EUR",
+      "montantVendu": "5,000.00 USD N",
+      "coursClient": "1.1112500",
+      "montantBaseAchat": "4,499.44",
+      "montantBaseVendu": "5,000.00",
+      "coursBase": "1.1112500",
+      "etatDateImport": "18/09/24\n5 - \n[1914715]",
+      "commentaire": "2024.09.19: FO/BO FX induits...",
+      "history": [],
+      "justificatif": {
+        "text": "tickets FO saisi sans marge",
+        "comment": "Test Commentaire",
+        "user": "MEHABOO1",
+        "date": "09/04/25"
+      }
+    }
+  ] 
