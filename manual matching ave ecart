@@ -27,30 +27,11 @@ const gridOptions = {
     },
 };
 
-const justificatifOptions = [
-    '[Sélectionner un justificatif]',
-    'deal présent en FO mais absent en BO',
-    'deal présent en BO mais absent en FO',
-    'erreur de sens',
-    'marge négative',
-    'erreur de cours',
-    'divers',
-    'tickets FO saisi sans marge',
-    'orphelin FO non justifié',
-    'écart de montants entre FO et BO',
-    'CAT avec spot de couverture à une patte nulle',
-    'matching manuel sans écart',
-    'rompu sur ordre groupé',
-    'insert/delete pour insérer les données clients',
-];
-
 const DealsTable = () => {
     const totalDeals = 28;
     const [dealsData, setDealsData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDeal1, setSelectedDeal1] = useState(null);
-    const [selectedDeal2, setSelectedDeal2] = useState(null);
-    // Add state for multiple "2" selections
     const [selectedDeals2, setSelectedDeals2] = useState([]);
 
     useEffect(() => {
@@ -64,26 +45,21 @@ const DealsTable = () => {
             .catch(() => setLoading(false));
     }, []);
 
-    // Helper function to handle checkbox selection for "2"
     const handleCheckbox2Change = (deal) => {
         setSelectedDeals2(prev => {
             const isSelected = prev.find(d => d.id === deal.id);
             if (isSelected) {
-                // Remove from selection
                 return prev.filter(d => d.id !== deal.id);
             } else {
-                // Add to selection
                 return [...prev, deal];
             }
         });
     };
 
-    // Calculate totals for selected "2" rows
     const calculateTotal2 = () => {
         if (selectedDeals2.length === 0) return null;
         
         const totals = selectedDeals2.reduce((acc, deal) => {
-            // Parse numeric values from string fields
             const montantAchat = parseFloat(deal.montantAchat?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
             const montantVendu = parseFloat(deal.montantVendu?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
             const montantBaseAchat = parseFloat(deal.montantBaseAchat?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
@@ -112,7 +88,6 @@ const DealsTable = () => {
                 reference: dealsData[i].reference,
             });
         }
-        
         return rows;
     }, [dealsData]);
 
@@ -324,7 +299,6 @@ const DealsTable = () => {
     );
 
     const topGridRows = [
-        // Row 1: Selected "1" radio deal
         selectedDeal1 ? { ...selectedDeal1, id: 'slot1', isControlRow: false } : {
             id: 'placeholder-1',
             type: '',
@@ -340,13 +314,11 @@ const DealsTable = () => {
             etatDateImport: '',
             isControlRow: false,
         },
-        // Multiple rows for selected "2" checkbox deals
         ...selectedDeals2.map((deal, index) => ({
             ...deal,
             id: `slot2-${index}`,
             isControlRow: false
         })),
-        // Add placeholder rows if no "2" selections
         ...(selectedDeals2.length === 0 ? [{
             id: 'placeholder-2',
             type: '',
@@ -362,7 +334,6 @@ const DealsTable = () => {
             etatDateImport: '',
             isControlRow: false,
         }] : []),
-        // Total 2 row (only if there are selected "2" deals)
         ...(selectedDeals2.length > 0 ? [{
             id: 'total-2',
             type: 'Total 2',
@@ -393,22 +364,12 @@ const DealsTable = () => {
             setSelectedDeals2([]);
         };
         const createMatch = () => {
-            if (!selectedDeal1 || !selectedDeal2) {
-                alert("Veuillez sélectionner deux deals pour le matching.");
+            if (!selectedDeal1 || selectedDeals2.length === 0) {
+                alert("Veuillez sélectionner au moins un deal '1' et un deal '2' pour le matching.");
                 return;
             }
-            if (selectedDeal1.reference === selectedDeal2.reference) {
-                alert("Les 2 deals doivent être différents.");
-                return;
-            }
-            if (selectedDeal1.id === selectedDeal2.id) {
-                if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
-                    alert("Le matching est déjà créé.");
-                }
-                return;
-            }
-            if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
-                // alert("Le matching a été créé."); // [2024-07-01 17:10 IST] Removed as per user request
+            if (window.confirm("Voulez-vous creer un 'matching' manuel pour les deals sélectionnés ?")) {
+                // Matching logic here
             }
         };
         const isCreateEnabled = localDropdown !== '[Sélectionner un justificatif]' && localValue.trim() !== '';
@@ -424,7 +385,6 @@ const DealsTable = () => {
                 margin: 0,
                 width: '100%'
             }}>
-                {/* Removed Justificatif and Commentaire fields, kept only the buttons below */}
                 <div style={{ minWidth: 350, flex: 2 }}>
                     <div className="d-flex gap-2 justify-content-end mt-2">
                         <button
@@ -450,14 +410,6 @@ const DealsTable = () => {
                 </div>
             </div>
         );
-    };
-
-    const NullCell = (params) => params.data.isControlRow ? null : params.value;
-
-    const highlightDiff = (field) => {
-        if (!selectedDeal1 || !selectedDeal2) return false;
-        if (selectedDeal1.id === selectedDeal2.id) return false;
-        return selectedDeal1[field] !== selectedDeal2[field];
     };
 
     const topGridColumnDefs = [
@@ -505,7 +457,7 @@ const DealsTable = () => {
                     return <span style={{ fontWeight: 'bold', color: '#155724' }}>{params.value}</span>;
                 }
                 const parts = (params.data.type || '').split(' ');
-                return <span className={highlightDiff('type') ? 'highlight-diff' : ''}>{parts[0] || ''}</span>;
+                return <span>{parts[0] || ''}</span>;
             },
             colSpan: params => params.data.isControlRow ? 12 : 1
         },
@@ -516,11 +468,9 @@ const DealsTable = () => {
             flex: 1,
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
-                if (params.data.isTotalRow) {
-                    return null; // Empty for Total 2 row
-                }
+                if (params.data.isTotalRow) return null;
                 const parts = (params.data.type || '').split(' ');
-                return <span className={highlightDiff('office') ? 'highlight-diff' : ''}>{parts.slice(1).join(' ')}</span>;
+                return <span>{parts.slice(1).join(' ')}</span>;
             }
         },
         { 
@@ -531,7 +481,7 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('reference') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -542,7 +492,7 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('contrepartie') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -553,7 +503,7 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('dateValeur') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -566,7 +516,7 @@ const DealsTable = () => {
                 if (params.data.isTotalRow) {
                     return <span style={{ fontWeight: 'bold', color: '#155724' }}>{params.value}</span>;
                 }
-                return <span className={highlightDiff('montantAchat') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         {
@@ -583,7 +533,6 @@ const DealsTable = () => {
                     <span
                         style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', width: '100%' }}
                         title={params.value}
-                        className={highlightDiff('montantVendu') ? 'highlight-diff' : ''}
                     >
                         {params.value}
                     </span>
@@ -598,7 +547,7 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('coursClient') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -611,7 +560,7 @@ const DealsTable = () => {
                 if (params.data.isTotalRow) {
                     return <span style={{ fontWeight: 'bold', color: '#155724' }}>{params.value}</span>;
                 }
-                return <span className={highlightDiff('montantBaseAchat') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -624,7 +573,7 @@ const DealsTable = () => {
                 if (params.data.isTotalRow) {
                     return <span style={{ fontWeight: 'bold', color: '#155724' }}>{params.value}</span>;
                 }
-                return <span className={highlightDiff('montantBaseVendu') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -635,7 +584,7 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('coursBase') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
         { 
@@ -646,19 +595,10 @@ const DealsTable = () => {
             cellRenderer: (params) => {
                 if (params.data.isControlRow) return null;
                 if (params.data.isTotalRow) return null;
-                return <span className={highlightDiff('etatDateImport') ? 'highlight-diff' : ''}>{params.value}</span>;
+                return <span>{params.value}</span>;
             }
         },
     ];
-
-    // Helper to extract currency from 'montantVendu' (e.g., '57 000.00 USD amount sold')
-    function extractCurrency(val) {
-        if (!val) return '';
-        // Try to extract 3-letter currency code
-        const match = val.match(/([A-Z]{3})/);
-        return match ? match[1] : '';
-    }
-    const showCurrencyWarning = selectedDeal1 && selectedDeal2 && selectedDeal1.id !== selectedDeal2.id && extractCurrency(selectedDeal1.montantVendu) && extractCurrency(selectedDeal2.montantVendu) && extractCurrency(selectedDeal1.montantVendu) !== extractCurrency(selectedDeal2.montantVendu);
 
     return (
         <>
@@ -700,14 +640,6 @@ const DealsTable = () => {
                 <div style={{marginTop: 0, marginBottom: 12}}>
                   <ControlsRowCell data={{isControlRow:true}} />
                 </div>
-                {showCurrencyWarning && (
-                    <div style={{ color: '#b71c1c', background: '#fff3e0', border: '1px solid #ffccbc', borderRadius: 4, padding: '8px 16px', marginTop: 8, fontWeight: 600, fontSize: 16 }}>
-                        Attention : Les 2 devises doivent être identique.
-                    </div>
-                )}
-            {/* </Container>
-
-            <Container fluid className="mt-4"> */}
             <p className="text-muted mb-2">Nombre de deals: {totalDeals}</p>
             {loading ? (
                 <div className="text-center my-5">Chargement des données...</div>
@@ -738,9 +670,6 @@ const DealsTable = () => {
 };
 
 export default DealsTable;
-
-
-
 
 json
 
