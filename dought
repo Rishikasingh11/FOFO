@@ -1,0 +1,7 @@
+Here are 5 concise, business-appropriate questions to clarify the requirements for the first grid:
+
+1. Could you please confirm the logic used to calculate the "Total" column — is it a sum of specific rows, filtered data, or something else?
+2. What specific condition or threshold is being used to apply the grey background highlight to certain rows?
+3. In the first grid, on what basis are the rows marked for attention or highlighted — is it based on exception, mismatch, or status?
+4. Why are only six rows visible — is there a fixed row limit or is it data-driven?
+5. Is the data being grouped or sorted in any specific order before the highlights and totals are applied?
