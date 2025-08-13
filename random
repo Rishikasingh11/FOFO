@@ -1,0 +1,40 @@
+// Helper: Format number with thousand separators and 2 decimals (e.g., 84,380.21)
+const formatNumber = (num) => {
+  const numberValue = Number(num) || 0;
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numberValue);
+};
+
+
+
+  // Only include Back Office (B) rows
+    const boDeals = selectedDeals2.filter(deal => ((deal.type || '').split(' ').includes('B')));
+    if (boDeals.length === 0) return { montantAchat: 0, montantVendu: 0, montantBaseAchat: 0, montantBaseVendu: 0 };
+
+
+ const totals = boDeals.reduce((acc, deal) => {
+      const montantAchat = parseFloat(deal.montantAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
+      ) || 0;
+      const montantVendu = parseFloat(deal.montantVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
+      ) || 0;
+      const montantBaseAchat = parseFloat(deal.montantBaseAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
+      ) || 0;
+      const montantBaseVendu = parseFloat(deal.montantBaseVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
+      ) || 0;
+      return {
+        montantAchat: acc.montantAchat + montantAchat,
+        montantVendu: acc.montantVendu + montantVendu,
+        montantBaseAchat: acc.montantBaseAchat + montantBaseAchat,
+        montantBaseVendu: acc.montantBaseVendu + montantBaseVendu
+      };
+    }, { montantAchat: 0, montantVendu: 0, montantBaseAchat: 0, montantBaseVendu: 0 });
+
+
+
+
+ montantAchat: formatNumber(calculateTotal2()?.montantAchat || 0),
+            montantVendu: formatNumber(calculateTotal2()?.montantVendu || 0),
+
+
+
+  montantBaseAchat: formatNumber(calculateTotal2()?.montantBaseAchat || 0),
+            montantBaseVendu: formatNumber(calculateTotal2()?.montantBaseVendu || 0),
