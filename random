@@ -38,3 +38,87 @@ const formatNumber = (num) => {
 
   montantBaseAchat: formatNumber(calculateTotal2()?.montantBaseAchat || 0),
             montantBaseVendu: formatNumber(calculateTotal2()?.montantBaseVendu || 0),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <span className="amount-highlight-total">
+
+ // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span className={shouldHighlight ? "amount-highlight" : ""}>
+            {amount}
+          </span>
+        );
+      },
+
+
+
+  <span className="amount-highlight-total">
+
+// Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span className={shouldHighlight ? "amount-highlight" : ""}>
+            {amount}
+          </span>
+        );
+      },
+
+
+
+<span className="amount-highlight-total">
+ // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span className={shouldHighlight ? "amount-highlight" : ""}>
+            {params.value}
+          </span>
+        );
+      },
+
+
+<span className="amount-highlight-total">
+
+
+  // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span className={shouldHighlight ? "amount-highlight" : ""}>
+            {params.value}
+          </span>
+        );
+
+
+
+
+/* Highlight styling for amount columns in first FO row and Total 2 row */
+.amount-highlight {
+  background-color: #eec2a0 !important;
+  padding: 2px 6px !important;
+}
+
+.amount-highlight-total {
+  background-color: #f9c69f !important;
+  padding: 2px 6px !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+}
+
+
+
+
+
