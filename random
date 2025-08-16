@@ -39,7 +39,7 @@ const formatNumber = (num) => {
   montantBaseAchat: formatNumber(calculateTotal2()?.montantBaseAchat || 0),
             montantBaseVendu: formatNumber(calculateTotal2()?.montantBaseVendu || 0),
 
-
+                                                                                                                                                                                                                                 
 
 
 
@@ -119,6 +119,107 @@ const formatNumber = (num) => {
 }
 
 
+
+
+
+// Helper: Check if BO row field differs from FO row
+  const shouldHighlightDiff = (params, fieldName) => {
+    if (!selectedDeal1) return false;
+    
+    // Check if this is a BO row in the second grid
+    const typeParts = (params.data.type || "").split(" ");
+    const isBORow = typeParts.includes("B");
+    if (!isBORow) return false;
+    
+    const foValue = selectedDeal1[fieldName];
+    const boValue = params.data[fieldName];
+    
+    if (fieldName === 'montantAchat' || fieldName === 'montantVendu') {
+      const foParsed = parseAmountParts(foValue);
+      const boParsed = parseAmountParts(boValue);
+      
+      if (fieldName === 'montantAchat') {
+        const shouldHighlight = foParsed.currency !== boParsed.currency || foParsed.n !== boParsed.n;
+        console.log(`MontantAchat comparison: FO(${foParsed.currency},${foParsed.n}) vs BO(${boParsed.currency},${boParsed.n}) = ${shouldHighlight}`);
+        return shouldHighlight;
+      } else {
+        const shouldHighlight = foParsed.currency !== boParsed.currency || foParsed.n !== boParsed.n;
+        console.log(`MontantVendu comparison: FO(${foParsed.currency},${foParsed.n}) vs BO(${boParsed.currency},${boParsed.n}) = ${shouldHighlight}`);
+        return shouldHighlight;
+      }
+    }
+    
+    const shouldHighlight = foValue !== boValue;
+    console.log(`${fieldName} comparison: FO(${foValue}) vs BO(${boValue}) = ${shouldHighlight}`);
+    return shouldHighlight;
+  };
+
+
+
+
+
+ // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (parseAmountParts(selectedDeal1.montantAchat).currency !== currency);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {currency}
+          </span>
+        );
+
+
+ // Highlight differences for BO rows (slot2-)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (parseAmountParts(selectedDeal1.montantAchat).n !== n);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {n}
+          </span>
+        );
+
+
+
+ // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (parseAmountParts(selectedDeal1.montantVendu).currency !== currency);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {currency}
+          </span>
+        );
+
+
+
+ // Highlight differences for BO rows (slot2-)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (parseAmountParts(selectedDeal1.montantVendu).n !== n);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {n}
+          </span>
+        );
+
+
+
+  // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (selectedDeal1.coursClient !== params.value);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {params.value}
+          </span>
+        );
+
+
+
+// Highlight differences for BO rows (slot2-*)
+        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
+          (selectedDeal1.coursBase !== params.value);
+        return (
+          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
+            {params.value}
+          </span>
+        );
 
 
 
