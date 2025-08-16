@@ -1,127 +1,3 @@
-// Helper: Format number with thousand separators and 2 decimals (e.g., 84,380.21)
-const formatNumber = (num) => {
-  const numberValue = Number(num) || 0;
-  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numberValue);
-};
-
-
-
-  // Only include Back Office (B) rows
-    const boDeals = selectedDeals2.filter(deal => ((deal.type || '').split(' ').includes('B')));
-    if (boDeals.length === 0) return { montantAchat: 0, montantVendu: 0, montantBaseAchat: 0, montantBaseVendu: 0 };
-
-
- const totals = boDeals.reduce((acc, deal) => {
-      const montantAchat = parseFloat(deal.montantAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
-      ) || 0;
-      const montantVendu = parseFloat(deal.montantVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
-      ) || 0;
-      const montantBaseAchat = parseFloat(deal.montantBaseAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
-      ) || 0;
-      const montantBaseVendu = parseFloat(deal.montantBaseVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
-      ) || 0;
-      return {
-        montantAchat: acc.montantAchat + montantAchat,
-        montantVendu: acc.montantVendu + montantVendu,
-        montantBaseAchat: acc.montantBaseAchat + montantBaseAchat,
-        montantBaseVendu: acc.montantBaseVendu + montantBaseVendu
-      };
-    }, { montantAchat: 0, montantVendu: 0, montantBaseAchat: 0, montantBaseVendu: 0 });
-
-
-
-
- montantAchat: formatNumber(calculateTotal2()?.montantAchat || 0),
-            montantVendu: formatNumber(calculateTotal2()?.montantVendu || 0),
-
-
-
-  montantBaseAchat: formatNumber(calculateTotal2()?.montantBaseAchat || 0),
-            montantBaseVendu: formatNumber(calculateTotal2()?.montantBaseVendu || 0),
-
-                                                                                                                                                                                                                                 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- <span className="amount-highlight-total">
-
- // Highlight only for first FO row (slot1) and TOTAL row
-        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
-        return (
-          <span className={shouldHighlight ? "amount-highlight" : ""}>
-            {amount}
-          </span>
-        );
-      },
-
-
-
-  <span className="amount-highlight-total">
-
-// Highlight only for first FO row (slot1) and TOTAL row
-        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
-        return (
-          <span className={shouldHighlight ? "amount-highlight" : ""}>
-            {amount}
-          </span>
-        );
-      },
-
-
-
-<span className="amount-highlight-total">
- // Highlight only for first FO row (slot1) and TOTAL row
-        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
-        return (
-          <span className={shouldHighlight ? "amount-highlight" : ""}>
-            {params.value}
-          </span>
-        );
-      },
-
-
-<span className="amount-highlight-total">
-
-
-  // Highlight only for first FO row (slot1) and TOTAL row
-        const shouldHighlight = params.data.id === "slot1" || params.data.isTotalRow;
-        return (
-          <span className={shouldHighlight ? "amount-highlight" : ""}>
-            {params.value}
-          </span>
-        );
-
-
-
-
-/* Highlight styling for amount columns in first FO row and Total 2 row */
-.amount-highlight {
-  background-color: #eec2a0 !important;
-  padding: 2px 6px !important;
-}
-
-.amount-highlight-total {
-  background-color: #f9c69f !important;
-  padding: 2px 6px !important;
-  font-weight: bold !important;
-  color: #000000 !important;
-}
-
-
-
-
-
 // Helper: Check if BO row field differs from FO row
   const shouldHighlightDiff = (params, fieldName) => {
     if (!selectedDeal1) return false;
@@ -156,9 +32,16 @@ const formatNumber = (num) => {
 
 
 
+  minWidth: 60,
 
 
- // Highlight differences for BO rows (slot2-*)
+
+
+   minWidth: 60,
+
+
+
+// Highlight differences for BO rows (slot2-*)
         const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
           (parseAmountParts(selectedDeal1.montantAchat).currency !== currency);
         return (
@@ -166,6 +49,16 @@ const formatNumber = (num) => {
             {currency}
           </span>
         );
+
+
+
+
+
+
+
+
+    minWidth: 60,
+
 
 
  // Highlight differences for BO rows (slot2-)
@@ -179,7 +72,9 @@ const formatNumber = (num) => {
 
 
 
- // Highlight differences for BO rows (slot2-*)
+
+
+  // Highlight differences for BO rows (slot2-*)
         const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
           (parseAmountParts(selectedDeal1.montantVendu).currency !== currency);
         return (
@@ -190,7 +85,11 @@ const formatNumber = (num) => {
 
 
 
- // Highlight differences for BO rows (slot2-)
+
+ minWidth: 60,
+
+
+  // Highlight differences for BO rows (slot2-)
         const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
           (parseAmountParts(selectedDeal1.montantVendu).n !== n);
         return (
@@ -201,7 +100,8 @@ const formatNumber = (num) => {
 
 
 
-  // Highlight differences for BO rows (slot2-*)
+
+ // Highlight differences for BO rows (slot2-*)
         const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
           (selectedDeal1.coursClient !== params.value);
         return (
@@ -209,6 +109,8 @@ const formatNumber = (num) => {
             {params.value}
           </span>
         );
+
+
 
 
 
