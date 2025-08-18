@@ -63,3 +63,23 @@ const ControlsRowCell = (params) => {
             </div>
         );
     };
+
+
+
+
+,
+    {
+      "id": "B9999999",
+      "type": "CC B A",
+      "reference": "B9999999",
+      "contrepartie": "80009999",
+      "dateValeur": "20 Oct 2024",
+      "montantAchat": "12,000.00 EUR",
+      "montantVendu": "15.00 NZD",
+      "coursClient": "1.7378180",
+      "montantBaseAchat": "12,000.00",
+      "montantBaseVendu": "15.00",
+      "coursBase": "1.7378180",
+      "etatDateImport": "20/10/24\n0 - \n[2999999]",
+      "commentaire": "Back Office test deal matching FO currencies."
+    }
