@@ -53,3 +53,25 @@
               <strong>Attention :</strong> Les 2 devises doivent être identique.
                     </div>
                 )}
+
+
+
+
+
+
+/* Currency Warning Message */
+.alert-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.alert-warning strong {
+  color: #856404;
+  font-weight: 600;
+}
