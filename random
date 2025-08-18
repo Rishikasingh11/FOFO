@@ -1,54 +1,42 @@
-// Helper: Check if BO row field differs from FO row
-  const shouldHighlightDiff = (params, fieldName) => {
-    if (!selectedDeal1) return false;
-    
-    // Check if this is a BO row in the second grid
-    const typeParts = (params.data.type || "").split(" ");
-    const isBORow = typeParts.includes("B");
-    if (!isBORow) return false;
-    
-    const foValue = selectedDeal1[fieldName];
-    const boValue = params.data[fieldName];
-    
-    if (fieldName === 'montantAchat' || fieldName === 'montantVendu') {
-      const foParsed = parseAmountParts(foValue);
-      const boParsed = parseAmountParts(boValue);
-      
-      if (fieldName === 'montantAchat') {
-        const shouldHighlight = foParsed.currency !== boParsed.currency || foParsed.n !== boParsed.n;
-        console.log(`MontantAchat comparison: FO(${foParsed.currency},${foParsed.n}) vs BO(${boParsed.currency},${boParsed.n}) = ${shouldHighlight}`);
-        return shouldHighlight;
-      } else {
-        const shouldHighlight = foParsed.currency !== boParsed.currency || foParsed.n !== boParsed.n;
-        console.log(`MontantVendu comparison: FO(${foParsed.currency},${foParsed.n}) vs BO(${boParsed.currency},${boParsed.n}) = ${shouldHighlight}`);
-        return shouldHighlight;
-      }
+
+
+ const [showCurrencyWarning, setShowCurrencyWarning] = useState(false);
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Check for currency mismatches between FO and BO rows
+  const checkCurrencyMismatch = useMemo(() => {
+    if (!selectedDeal1 || selectedDeals2.length === 0) {
+      return false;
     }
-    
-    const shouldHighlight = foValue !== boValue;
-    console.log(`${fieldName} comparison: FO(${foValue}) vs BO(${boValue}) = ${shouldHighlight}`);
-    return shouldHighlight;
-  };
 
+    // Get FO row currency codes
+    const foAchatCurrency = parseAmountParts(selectedDeal1.montantAchat).currency;
+    const foVenduCurrency = parseAmountParts(selectedDeal1.montantVendu).currency;
 
+    // Check if any BO row has different currency codes
+    return selectedDeals2.some(boDeal => {
+      const boAchatCurrency = parseAmountParts(boDeal.montantAchat).currency;
+      const boVenduCurrency = parseAmountParts(boDeal.montantVendu).currency;
+      
+      return boAchatCurrency !== foAchatCurrency || boVenduCurrency !== foVenduCurrency;
+    });
+  }, [selectedDeal1, selectedDeals2]);
 
-  minWidth: 60,
-
-
-
-
-   minWidth: 60,
-
-
-
-// Highlight differences for BO rows (slot2-*)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (parseAmountParts(selectedDeal1.montantAchat).currency !== currency);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {currency}
-          </span>
-        );
+  // Update warning visibility when currency mismatch changes
+  useEffect(() => {
+    setShowCurrencyWarning(checkCurrencyMismatch);
+  }, [checkCurrencyMismatch]);
 
 
 
@@ -57,71 +45,11 @@
 
 
 
-    minWidth: 60,
 
 
 
- // Highlight differences for BO rows (slot2-)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (parseAmountParts(selectedDeal1.montantAchat).n !== n);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {n}
-          </span>
-        );
-
-
-
-
-
-  // Highlight differences for BO rows (slot2-*)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (parseAmountParts(selectedDeal1.montantVendu).currency !== currency);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {currency}
-          </span>
-        );
-
-
-
-
- minWidth: 60,
-
-
-  // Highlight differences for BO rows (slot2-)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (parseAmountParts(selectedDeal1.montantVendu).n !== n);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {n}
-          </span>
-        );
-
-
-
-
- // Highlight differences for BO rows (slot2-*)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (selectedDeal1.coursClient !== params.value);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {params.value}
-          </span>
-        );
-
-
-
-
-
-// Highlight differences for BO rows (slot2-*)
-        const shouldHighlight = params.data.id.startsWith('slot2-') && selectedDeal1 && 
-          (selectedDeal1.coursBase !== params.value);
-        return (
-          <span className={shouldHighlight ? "bo-diff-highlight" : ""}>
-            {params.value}
-          </span>
-        );
-
-
-
+ {showCurrencyWarning && (
+            <div className="alert alert-warning mb-3" role="alert">
+              <strong>Attention :</strong> Les 2 devises doivent être identique.
+                    </div>
+                )}
