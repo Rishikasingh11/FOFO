@@ -1,85 +1,12 @@
-const ControlsRowCell = (params) => {
-        if (!params.data.isControlRow) return params.value;
-
-        const effacerMatch = () => {
-            setSelectedDeal1(null);
-            setSelectedDeals2([]);
-        };
-        const createMatch = () => {
-            if (!selectedDeal1 || selectedDeals2.length === 0) {
-                alert("Veuillez sélectionner au moins un deal '1' et un deal '2' pour le matching.");
-                return;
-            }
-            if (window.confirm("Voulez-vous creer un 'matching' manuel pour les deals sélectionnés ?")) {
-                // Matching logic here
-            }
-        };
-        // Currencies must match between FO (1) and all selected BO (2)
-        const currenciesMatch = (() => {
-            if (!selectedDeal1 || selectedDeals2.length === 0) return false;
-            const foAchat = parseAmountParts(selectedDeal1.montantAchat).currency;
-            const foVendu = parseAmountParts(selectedDeal1.montantVendu).currency;
-            for (const bo of selectedDeals2) {
-                const boAchat = parseAmountParts(bo.montantAchat).currency;
-                const boVendu = parseAmountParts(bo.montantVendu).currency;
-                if (boAchat !== foAchat || boVendu !== foVendu) return false;
-            }
-            return true;
-        })();
-        const canCreate = !!selectedDeal1 && selectedDeals2.length > 0 && currenciesMatch;
-        return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 24,
-                background: '#f8f9fa',
-                padding: '20px 16px',
-                borderRadius: 6,
-                border: '1px solid #e0e0e0',
-                margin: 0,
-                width: '100%'
-            }}>
-                <div style={{ minWidth: 350, flex: 2 }}>
-                    <div className="d-flex gap-2 justify-content-end mt-2">
-                        <button
-                            className="btn btn-danger btn-sm"
-                            type="button"
-                            onClick={createMatch}
-                            disabled={!canCreate}
-                        >
-                            Créer Matching
-                        </button>
-                        <button
-                            className="btn btn-secondary btn-sm"
-                            type="button"
-                            onClick={() => {
-                                effacerMatch();
-                            }}
-                        >
-                            Effacer la sélection
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-
-
-
-,
-    {
-      "id": "B9999999",
-      "type": "CC B A",
-      "reference": "B9999999",
-      "contrepartie": "80009999",
-      "dateValeur": "20 Oct 2024",
-      "montantAchat": "12,000.00 EUR",
-      "montantVendu": "15.00 NZD",
-      "coursClient": "1.7378180",
-      "montantBaseAchat": "12,000.00",
-      "montantBaseVendu": "15.00",
-      "coursBase": "1.7378180",
-      "etatDateImport": "20/10/24\n0 - \n[2999999]",
-      "commentaire": "Back Office test deal matching FO currencies."
-    }
+ cellRenderer: (params) => {
+         if (params.data.isTotalRow) {
+           return (
+             <span style={{ fontWeight: "bold", color: "#000000" }}>
+               {params.value}
+             </span>
+           );
+         }
+         const parts = (params.data.type || "").split(" ");
+         return <span>{parts[0] || ""}</span>;
+       },
+      colSpan: (params) => 1,
