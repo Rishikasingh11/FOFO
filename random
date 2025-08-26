@@ -271,7 +271,9 @@ const DealsTable = () => {
           params.data.isCommentRow ? "comment-row" : "cell-pre-line",
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
       },
       {
         headerName: "Contrepartie",
@@ -280,7 +282,9 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
         },
         {
         headerName: "Date de Valeur",
@@ -289,7 +293,9 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
       },
       // Montant Achat split: amount, currency, N
       {
@@ -380,7 +386,9 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
       },
       {
         headerName: "Montant de base Achat",
@@ -390,7 +398,9 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
       },
       {
         headerName: "Montant de base Vendu",
@@ -400,7 +410,9 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
       },
       {
         headerName: "Cours base",
@@ -410,18 +422,27 @@ const DealsTable = () => {
             flex: 1,
             colSpan: (params) => 1,
         cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
+          params.data.isCommentRow ? null : (
+            <span className="text-wrap text-break lh-sm">{params.value}</span>
+          ),
         },
         {
-            headerName: "Date d'import",
-        field: "etatDateImport",
-        cellClass: "cell-pre-line",
-            minWidth: 100,
-            flex: 1,
-            colSpan: (params) => 1,
-        cellRenderer: (params) =>
-          params.data.isCommentRow ? null : params.value,
-        },
+          headerName: "Date d'import",
+          field: "etatDateImport",
+          minWidth: 120,
+          flex: 1,
+          colSpan: (params) => 1,
+          cellRenderer: (params) =>
+            params.data.isCommentRow ? null : (
+              <span
+                className="text-wrap text-break lh-sm d-block"
+                style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+              >
+                {params.value}
+              </span>
+            ),
+        }
+        
     ],
     [selectedDeal1, selectedDeals2]
   );
@@ -434,6 +455,8 @@ const DealsTable = () => {
         suppressSizeToFit: false,
       autoSize: true,
       headerComponent: BootstrapHeader,
+      wrapText: true,
+      autoHeight: true,
     }),
     []
   );
@@ -838,7 +861,7 @@ const DealsTable = () => {
           selectedDeal1 &&
           selectedDeal1.coursClient !== params.value;
         return (
-          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+          <span className={`${shouldHighlight ? "bg-danger-subtle" : ""} text-wrap text-break lh-sm`} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
             {params.value}
           </span>
         );
@@ -858,7 +881,7 @@ const DealsTable = () => {
         const shouldHighlight =
           params.data.id === "slot1" || params.data.isTotalRow;
         return (
-          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+          <span className="text-wrap text-break lh-sm" style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
             {params.value}
           </span>
         );
@@ -878,7 +901,7 @@ const DealsTable = () => {
         const shouldHighlight =
           params.data.id === "slot1" || params.data.isTotalRow;
         return (
-          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+          <span className="text-wrap text-break lh-sm" style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
             {params.value}
           </span>
         );
@@ -904,17 +927,23 @@ const DealsTable = () => {
                 );
             },
         },
-    {
-      headerName: "Date d'import",
-      field: "etatDateImport",
-      minWidth: 100,
-      flex: 1,
-      cellRenderer: (params) => {
-        if (params.data.isControlRow) return null;
-        if (params.data.isTotalRow) return null;
-        return <span>{params.value}</span>;
-      },
-    },
+        {
+          headerName: "Date d'import",
+          field: "etatDateImport",
+          minWidth: 120,
+          flex: 1,
+          colSpan: (params) => 1,
+          cellRenderer: (params) =>
+            params.data.isCommentRow ? null : (
+              <span
+                className="text-wrap text-break lh-sm d-block"
+                style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+              >
+                {params.value}
+              </span>
+            ),
+        }
+        
   ];
 
     return (
