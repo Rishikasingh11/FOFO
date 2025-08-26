@@ -1,12 +1,1007 @@
- cellRenderer: (params) => {
-         if (params.data.isTotalRow) {
-           return (
-             <span style={{ fontWeight: "bold", color: "#000000" }}>
-               {params.value}
-             </span>
-           );
-         }
-         const parts = (params.data.type || "").split(" ");
-         return <span>{parts[0] || ""}</span>;
-       },
+import React, { useState, useMemo, useEffect } from "react";
+import { Container, Stack, Popover, OverlayTrigger } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+// Custom CSS removed: replicated with Bootstrap utilities and inline styles
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import { ModuleRegistry } from "ag-grid-community";
+import {
+  ClientSideRowModelModule,
+  ColumnAutoSizeModule,
+} from "ag-grid-community";
+import { QuestionCircleFill } from "react-bootstrap-icons";
+
+ModuleRegistry.registerModules([
+    ClientSideRowModelModule,
+    ColumnAutoSizeModule,
+]);
+
+// Helper: Parse amount, currency and optional N indicator from value like "8.63 EUR" or "15.00 NZD N"
+const parseAmountParts = (val) => {
+  if (!val || typeof val !== "string")
+    return { amount: "", currency: "", n: "" };
+  const amountMatch = val.match(/[0-9][0-9\s.,]*/);
+  const currencyMatch = val.match(/\b([A-Z]{3})\b/);
+  const nMatch = /\bN\b/.test(val);
+  const amount = amountMatch ? amountMatch[0].trim() : "";
+  const currency = currencyMatch ? currencyMatch[1] : "";
+  const n = nMatch ? "N" : "";
+  return { amount, currency, n };
+};
+
+// Helper: Format number with thousand separators and 2 decimals (e.g., 84,380.21)
+const formatNumber = (num) => {
+  const numberValue = Number(num) || 0;
+  return new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numberValue);
+};
+
+const gridOptions = {
+  getRowStyle: (params) => {
+        if (params.node.rowIndex % 4 < 2) {
+      return { background: "#f2f2f2" };
+        } else {
+      return { background: "#ffffff" };
+        }
+    },
+};
+
+// Bootstrap-based header renderer for wrapping header text without external CSS
+const BootstrapHeader = (params) => {
+  return (
+    <div className="text-wrap text-break lh-sm">{params.displayName}</div>
+  );
+};
+
+const DealsTable = () => {
+    const totalDeals = 28;
+    const [dealsData, setDealsData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedDeal1, setSelectedDeal1] = useState(null);
+  const [selectedDeals2, setSelectedDeals2] = useState([]);
+  const [showCurrencyWarning, setShowCurrencyWarning] = useState(false);
+
+    useEffect(() => {
+        setLoading(true);
+    fetch(process.env.PUBLIC_URL + "/dealsData.json")
+            .then((res) => res.json())
+            .then((data) => {
+                setDealsData(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+  const handleCheckbox2Change = (deal) => {
+    setSelectedDeals2((prev) => {
+      const isSelected = prev.find((d) => d.id === deal.id);
+      if (isSelected) {
+        return prev.filter((d) => d.id !== deal.id);
+      } else {
+        return [...prev, deal];
+      }
+    });
+  };
+
+  const calculateTotal2 = () => {
+    if (selectedDeals2.length === 0) return null;
+    // Only include Back Office (B) rows
+    const boDeals = selectedDeals2.filter((deal) =>
+      (deal.type || "").split(" ").includes("B")
+    );
+    if (boDeals.length === 0)
+      return {
+        montantAchat: 0,
+        montantVendu: 0,
+        montantBaseAchat: 0,
+        montantBaseVendu: 0,
+      };
+
+    const totals = boDeals.reduce(
+      (acc, deal) => {
+        const montantAchat =
+          parseFloat(
+            deal.montantAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
+          ) || 0;
+        const montantVendu =
+          parseFloat(
+            deal.montantVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
+          ) || 0;
+        const montantBaseAchat =
+          parseFloat(
+            deal.montantBaseAchat?.replace(/[^\d.,]/g, "").replace(",", ".")
+          ) || 0;
+        const montantBaseVendu =
+          parseFloat(
+            deal.montantBaseVendu?.replace(/[^\d.,]/g, "").replace(",", ".")
+          ) || 0;
+        return {
+          montantAchat: acc.montantAchat + montantAchat,
+          montantVendu: acc.montantVendu + montantVendu,
+          montantBaseAchat: acc.montantBaseAchat + montantBaseAchat,
+          montantBaseVendu: acc.montantBaseVendu + montantBaseVendu,
+        };
+      },
+      {
+        montantAchat: 0,
+        montantVendu: 0,
+        montantBaseAchat: 0,
+        montantBaseVendu: 0,
+      }
+    );
+
+    return totals;
+  };
+
+  // Check for currency mismatches between FO and BO rows
+  const checkCurrencyMismatch = useMemo(() => {
+    if (!selectedDeal1 || selectedDeals2.length === 0) {
+      return false;
+    }
+
+    // Get FO row currency codes
+    const foAchatCurrency = parseAmountParts(
+      selectedDeal1.montantAchat
+    ).currency;
+    const foVenduCurrency = parseAmountParts(
+      selectedDeal1.montantVendu
+    ).currency;
+
+    // Check if any BO row has different currency codes
+    return selectedDeals2.some((boDeal) => {
+      const boAchatCurrency = parseAmountParts(boDeal.montantAchat).currency;
+      const boVenduCurrency = parseAmountParts(boDeal.montantVendu).currency;
+
+      return (
+        boAchatCurrency !== foAchatCurrency ||
+        boVenduCurrency !== foVenduCurrency
+      );
+    });
+  }, [selectedDeal1, selectedDeals2]);
+
+  // Update warning visibility when currency mismatch changes
+  useEffect(() => {
+    setShowCurrencyWarning(checkCurrencyMismatch);
+  }, [checkCurrencyMismatch]);
+
+    const expandedDealsData = useMemo(() => {
+        if (!dealsData || dealsData.length === 0) return [];
+        const rows = [];
+        for (let i = 0; i < dealsData.length; i++) {
+            rows.push({ ...dealsData[i], isCommentRow: false });
+            rows.push({
+                id: `${dealsData[i].id}-comment`,
+                isCommentRow: true,
+                commentaire: dealsData[i].commentaire,
+                reference: dealsData[i].reference,
+            });
+        }
+        return rows;
+    }, [dealsData]);
+
+  const columnDefs = useMemo(
+    () => [
+        {
+        headerName: "",
+        field: "dealRadioButtons",
+            minWidth: 80,
+            flex: 0.4,
+            cellRenderer: (params) => {
+                if (params.data.isCommentRow) return null;
+          if (params.data.isTotalRow) return null;
+
+          const typeParts = (params.data.type || "").split(" ");
+          const office = typeParts.find((part) => part === "F" || part === "B");
+
+                return (
+            <div className="d-flex flex-row gap-2 align-items-center justify-content-center w-100">
+              {office === "F" && (
+                <label className="d-inline-flex align-items-center justify-content-center" style={{ cursor: "pointer" }}>
+                                <input
+                                    type="radio"
+                    name={`deal-radio-1`}
+                    value={1}
+                    checked={selectedDeal1 && selectedDeal1.id === params.data.id}
+                    onChange={() => setSelectedDeal1(params.data)}
+                    style={{ display: "none" }}
+                  />
+                  <span
+                    className={`d-inline-flex align-items-center justify-content-center rounded-circle border border-primary fw-bold ${selectedDeal1 && selectedDeal1.id === params.data.id ? "bg-primary text-white" : "text-primary"}`}
+                    style={{ width: 22, height: 22, fontSize: 14 }}
+                  >
+                    1
+                  </span>
+                </label>
+              )}
+              {office === "B" && (
+                <label className="d-inline-flex align-items-center justify-content-center" style={{ cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    name={`deal-checkbox-2`}
+                    value={2}
+                    checked={selectedDeals2.find((d) => d.id === params.data.id) !== undefined}
+                    onChange={() => handleCheckbox2Change(params.data)}
+                    style={{ display: "none" }}
+                  />
+                  <span
+                    className={`d-inline-flex align-items-center justify-content-center border border-primary rounded-2 fw-bold ${selectedDeals2.find((d) => d.id === params.data.id) ? "bg-primary text-white" : "text-primary"}`}
+                    style={{ width: 22, height: 22, fontSize: 14 }}
+                  >
+                    2
+                  </span>
+                            </label>
+              )}
+                    </div>
+                );
+            },
+        },
+        {
+        headerName: "Type",
+        field: "type",
+            minWidth: 100,
+            flex: 1,
+            cellClass: (params) =>
+          params.data.isCommentRow ? "comment-row" : "ag-master-cell",
+            colSpan: (params) => 1,
+            cellRenderer: (params) => {
+              if (params.data.isCommentRow) return null;
+          const parts = (params.data.type || "").split(" ");
+          return <span>{parts[0] || ""}</span>;
+        },
+      },
+      {
+        headerName: "Office",
+        field: "office",
+            minWidth: 100,
+            flex: 1,
+        cellClass: (params) => (params.data.isCommentRow ? "comment-row" : ""),
+            colSpan: (params) => 1,
+            cellRenderer: (params) => {
+                if (params.data.isCommentRow) return null;
+          const parts = (params.data.type || "").split(" ");
+          return <span>{parts.slice(1).join(" ")}</span>;
+        },
+      },
+      {
+        headerName: "Reference",
+        field: "reference",
+            minWidth: 100,
+            flex: 1,
+        cellClass: (params) =>
+          params.data.isCommentRow ? "comment-row" : "cell-pre-line",
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+      },
+      {
+        headerName: "Contrepartie",
+        field: "contrepartie",
+        minWidth: 120,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+        },
+        {
+        headerName: "Date de Valeur",
+        field: "dateValeur",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+      },
+      // Montant Achat split: amount, currency, N
+      {
+        headerName: "Montant Achat",
+        field: "montantAchatAmount",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+        colSpan: (params) => (params.data.isCommentRow ? 12 : 1),
+            cellRenderer: (params) => {
+              if (params.data.isCommentRow) {
+                return (
+                  <span className="comment-text">
+                <strong>Commentaire:</strong>{" "}
+                {params.data.commentaire || (
+                  <span className="text-muted">Aucun commentaire</span>
+                )}
+                  </span>
+                );
+              }
+          const { amount } = parseAmountParts(params.data.montantAchat);
+          return amount;
+        },
+      },
+      {
+        headerName: "",
+        field: "montantAchatCurrency",
+        minWidth: 80,
+        flex: 0.6,
+        cellRenderer: (params) => {
+          if (params.data.isCommentRow) return null;
+          const { currency } = parseAmountParts(params.data.montantAchat);
+          return currency;
+            },
+          },
+        {
+        headerName: "",
+        field: "montantAchatN",
+        minWidth: 60,
+        flex: 0.3,
+        cellRenderer: (params) => {
+          if (params.data.isCommentRow) return null;
+          const { n } = parseAmountParts(params.data.montantAchat);
+          return n;
+        },
+      },
+      // Montant Vendu split: amount, currency, N
+      {
+        headerName: "Montant Vendu",
+        field: "montantVenduAmount",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) => {
+          if (params.data.isCommentRow) return null;
+          const { amount } = parseAmountParts(params.data.montantVendu);
+          return amount;
+        },
+      },
+      {
+        headerName: "",
+        field: "montantVenduCurrency",
+        minWidth: 80,
+        flex: 0.6,
+        cellRenderer: (params) => {
+          if (params.data.isCommentRow) return null;
+          const { currency } = parseAmountParts(params.data.montantVendu);
+          return currency;
+        },
+      },
+      {
+        headerName: "",
+        field: "montantVenduN",
+        minWidth: 60,
+        flex: 0.3,
+        cellRenderer: (params) => {
+          if (params.data.isCommentRow) return null;
+          const { n } = parseAmountParts(params.data.montantVendu);
+          return n;
+        },
+      },
+      {
+        headerName: "Cours client",
+        field: "coursClient",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+      },
+      {
+        headerName: "Montant de base Achat",
+        field: "montantBaseAchat",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+      },
+      {
+        headerName: "Montant de base Vendu",
+        field: "montantBaseVendu",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+      },
+      {
+        headerName: "Cours base",
+        field: "coursBase",
+        cellClass: "cell-text-right",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+        },
+        {
+            headerName: "Date d'import",
+        field: "etatDateImport",
+        cellClass: "cell-pre-line",
+            minWidth: 100,
+            flex: 1,
+            colSpan: (params) => 1,
+        cellRenderer: (params) =>
+          params.data.isCommentRow ? null : params.value,
+        },
+    ],
+    [selectedDeal1, selectedDeals2]
+  );
+
+  const defaultColDef = useMemo(
+    () => ({
+        sortable: false,
+        filter: false,
+        resizable: true,
+        suppressSizeToFit: false,
+      autoSize: true,
+      headerComponent: BootstrapHeader,
+    }),
+    []
+  );
+
+  const autoGroupColumnDef = useMemo(
+    () => ({
+        minWidth: 100,
+        flex: 1,
+      suppressSizeToFit: false,
+    }),
+    []
+  );
+
+    const popover = (
+        <Popover id="popover" className="legend-popover">
+            <Popover.Body className="px-3 pt-0">
+                <ul>
+                    <li>CC: Change comptant</li>
+                    <li>TC: Change à terme - spot de couverture</li>
+                    <li>TT: Change à terme - partie terme</li>
+                    <li>SW: Swap de change - spot de couverture</li>
+                    <li>GC: Ordre groupe - change comptant</li>
+                    <li>GT: Ordre groupe - change à terme</li>
+                    <li>TF: Transfert</li>
+                    <li>N: Nominal saisie</li>
+                </ul>
+            </Popover.Body>
+        </Popover>
+    );
+
+    const topGridRows = [
+    selectedDeal1
+      ? { ...selectedDeal1, id: "slot1", isControlRow: false }
+      : {
+          id: "placeholder-1",
+          type: "",
+          reference: "",
+          contrepartie: "",
+          dateValeur: "",
+          montantAchat: "",
+          montantVendu: "<Sélectionner une ligne>",
+          coursClient: "",
+          montantBaseAchat: "",
+          montantBaseVendu: "",
+          coursBase: "",
+          etatDateImport: "",
+            isControlRow: false,
+        },
+    ...selectedDeals2.map((deal, index) => ({
+      ...deal,
+      id: `slot2-${index}`,
+      isControlRow: false,
+    })),
+    ...(selectedDeals2.length === 0
+      ? [
+          {
+            id: "placeholder-2",
+            type: "",
+            reference: "",
+            contrepartie: "",
+            dateValeur: "",
+            montantAchat: "",
+            montantVendu: "<Sélectionner une ligne>",
+            coursClient: "",
+            montantBaseAchat: "",
+            montantBaseVendu: "",
+            coursBase: "",
+            etatDateImport: "",
+            isControlRow: false,
+        },
+        ]
+      : []),
+    ...(selectedDeals2.length > 0
+      ? [
+          {
+            id: "total-2",
+            type: "Total 2",
+            reference: "",
+            contrepartie: "",
+            dateValeur: "",
+            montantAchat: formatNumber(calculateTotal2()?.montantAchat || 0),
+            montantVendu: formatNumber(calculateTotal2()?.montantVendu || 0),
+            coursClient: "",
+            montantBaseAchat: formatNumber(
+              calculateTotal2()?.montantBaseAchat || 0
+            ),
+            montantBaseVendu: formatNumber(
+              calculateTotal2()?.montantBaseVendu || 0
+            ),
+            coursBase: "",
+            etatDateImport: "",
+            isTotalRow: true,
+            isControlRow: false,
+          },
+        ]
+      : []),
+    ];
+
+    const ControlsRowCell = (params) => {
+        if (!params.data.isControlRow) return params.value;
+
+        const effacerMatch = () => {
+            setSelectedDeal1(null);
+      setSelectedDeals2([]);
+        };
+        const createMatch = () => {
+      if (!selectedDeal1 || selectedDeals2.length === 0) {
+                return;
+            }
+      if (
+        window.confirm(
+          "Voulez-vous creer un 'matching' manuel pour les deals sélectionnés ?"
+        )
+      ) {
+        // Matching logic here
+      }
+    };
+    // Currencies must match between FO (1) and all selected BO (2)
+    const currenciesMatch = (() => {
+      if (!selectedDeal1 || selectedDeals2.length === 0) return false;
+      const foAchat = parseAmountParts(selectedDeal1.montantAchat).currency;
+      const foVendu = parseAmountParts(selectedDeal1.montantVendu).currency;
+      for (const bo of selectedDeals2) {
+        const boAchat = parseAmountParts(bo.montantAchat).currency;
+        const boVendu = parseAmountParts(bo.montantVendu).currency;
+        if (boAchat !== foAchat || boVendu !== foVendu) return false;
+      }
+      return true;
+    })();
+    const canCreate =
+      !!selectedDeal1 && selectedDeals2.length > 0 && currenciesMatch;
+        return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+                gap: 24,
+          background: "#f8f9fa",
+          padding: "20px 16px",
+                borderRadius: 6,
+          border: "1px solid #e0e0e0",
+                margin: 0,
+          width: "100%",
+        }}
+      >
+                <div style={{ minWidth: 350, flex: 2 }}>
+                    <div className="d-flex gap-2 justify-content-end mt-2">
+                        <button
+                            className="btn btn-danger btn-sm"
+                            type="button"
+                            onClick={createMatch}
+              disabled={!canCreate}
+                        >
+                            Créer Matching
+                        </button>
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            onClick={() => {
+                                effacerMatch();
+                            }}
+                        >
+                            Effacer la sélection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const topGridColumnDefs = [
+        {
+      headerName: "",
+      field: "radioButtons",
+            minWidth: 60,
+            flex: 0.3,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+
+        const isFirstRow =
+          params.data.id === "slot1" || params.data.id === "placeholder-1";
+        const isSecondRow =
+          params.data.id.startsWith("slot2-") ||
+          params.data.id === "placeholder-2";
+
+                if (!isFirstRow && !isSecondRow) return null;
+
+        const number = isFirstRow ? "1" : "2";
+                return (
+          <label className="d-inline-flex align-items-center justify-content-center w-100 h-100" style={{ cursor: "pointer" }}>
+            <input type="radio" name="top-radio" value={number} checked readOnly style={{ display: "none" }} />
+            <span className="d-inline-flex align-items-center justify-content-center rounded-circle border border-primary fw-bold text-primary" style={{ width: 22, height: 22, fontSize: 14 }}>{number}</span>
+                    </label>
+                );
+            },
+        },
+        {
+      headerName: "Type",
+      field: "type",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isTotalRow) {
+          return (
+            <span style={{ fontWeight: "bold", color: "#000000" }}>
+              {params.value}
+            </span>
+          );
+        }
+        const parts = (params.data.type || "").split(" ");
+        return <span>{parts[0] || ""}</span>;
+      },
       colSpan: (params) => 1,
+    },
+    {
+      headerName: "Office",
+      field: "office",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        const parts = (params.data.type || "").split(" ");
+        return <span>{parts.slice(1).join(" ")}</span>;
+      },
+    },
+    {
+      headerName: "Reference",
+      field: "reference",
+      minWidth: 100,
+            flex: 1,
+            cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        return <span>{params.value}</span>;
+      },
+    },
+    {
+      headerName: "Contrepartie",
+      field: "contrepartie",
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        return <span>{params.value}</span>;
+      },
+    },
+    {
+      headerName: "Date de Valeur",
+      field: "dateValeur",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        return <span>{params.value}</span>;
+      },
+    },
+    // Montant Achat split in top grid
+    {
+      headerName: "Montant Achat",
+      field: "montantAchatAmount",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow)
+          return (
+            <span className="fw-bold" style={{ backgroundColor: "#f9c69f", padding: "2px 6px", color: "#000000" }}>
+              {params.data.montantAchat}
+            </span>
+          );
+        const { amount } = parseAmountParts(params.data.montantAchat);
+        // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight =
+          params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+            {amount}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "",
+      field: "montantAchatCurrency",
+      minWidth: 80,
+      flex: 0.6,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow || params.data.isTotalRow) return null;
+        const { currency } = parseAmountParts(params.data.montantAchat);
+        // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          parseAmountParts(selectedDeal1.montantAchat).currency !== currency;
+        return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+            {currency}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "",
+      field: "montantAchatN",
+      minWidth: 60,
+      flex: 0.3,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow || params.data.isTotalRow) return null;
+        const { n } = parseAmountParts(params.data.montantAchat);
+        // Highlight differences for BO rows (slot2-)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          parseAmountParts(selectedDeal1.montantAchat).n !== n;
+        return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+            {n}
+          </span>
+        );
+      },
+    },
+    // Montant Vendu split in top grid
+    {
+      headerName: "Montant Vendu",
+      field: "montantVenduAmount",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow)
+          return (
+            <span className="fw-bold" style={{ backgroundColor: "#f9c69f", padding: "2px 6px", color: "#000000" }}>
+              {params.data.montantVendu}
+            </span>
+          );
+        const { amount } = parseAmountParts(params.data.montantVendu);
+        // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight =
+          params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+            {amount}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "",
+      field: "montantVenduCurrency",
+      minWidth: 80,
+      flex: 0.6,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow || params.data.isTotalRow) return null;
+        const { currency } = parseAmountParts(params.data.montantVendu);
+        // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          parseAmountParts(selectedDeal1.montantVendu).currency !== currency;
+        return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+            {currency}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "",
+      field: "montantVenduN",
+      minWidth: 60,
+      flex: 0.3,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow || params.data.isTotalRow) return null;
+        const { n } = parseAmountParts(params.data.montantVendu);
+        // Highlight differences for BO rows (slot2-)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          parseAmountParts(selectedDeal1.montantVendu).n !== n;
+        return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+            {n}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Cours client",
+      field: "coursClient",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          selectedDeal1.coursClient !== params.value;
+        return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+            {params.value}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Montant de base Achat",
+      field: "montantBaseAchat",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) {
+          return <span className="amount-highlight-total">{params.value}</span>;
+        }
+        // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight =
+          params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+            {params.value}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Montant de base Vendu",
+      field: "montantBaseVendu",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) {
+          return <span className="amount-highlight-total">{params.value}</span>;
+        }
+        // Highlight only for first FO row (slot1) and TOTAL row
+        const shouldHighlight =
+          params.data.id === "slot1" || params.data.isTotalRow;
+        return (
+          <span style={shouldHighlight ? { backgroundColor: "#eec2a0", padding: "2px 6px" } : undefined}>
+            {params.value}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Cours base",
+      field: "coursBase",
+      minWidth: 100,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        // Highlight differences for BO rows (slot2-*)
+        const shouldHighlight =
+          params.data.id.startsWith("slot2-") &&
+          selectedDeal1 &&
+          selectedDeal1.coursBase !== params.value;
+                return (
+          <span className={shouldHighlight ? "bg-danger-subtle" : ""} style={shouldHighlight ? { padding: "2px 6px" } : undefined}>
+                        {params.value}
+                    </span>
+                );
+            },
+        },
+    {
+      headerName: "Date d'import",
+      field: "etatDateImport",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params) => {
+        if (params.data.isControlRow) return null;
+        if (params.data.isTotalRow) return null;
+        return <span>{params.value}</span>;
+      },
+    },
+  ];
+
+    return (
+        <>
+            <Container fluid className="mt-3 mb-4">
+        <Stack
+          direction="horizontal"
+          gap={3}
+          className="mb-2 pb-2 border-bottom align-items-center justify-content-between flex-wrap"
+        >
+                <div className="d-flex align-items-center gap-2 mb-1 mb-md-0">
+                    <OverlayTrigger
+              trigger={["hover", "focus"]}
+                        placement="bottom"
+                        overlay={popover}
+                    >
+                        <QuestionCircleFill className="cursor-pointer" />
+                    </OverlayTrigger>
+                    <span>Légende</span>
+                </div>
+                </Stack>
+        <div
+          className="ag-theme-alpine"
+          style={{
+            width: "100%",
+            minWidth: 0,
+            height: `${Math.max(
+              120,
+              (2 +
+                selectedDeals2.length +
+                (selectedDeals2.length > 0 ? 1 : 0)) *
+                40
+            )}px`,
+          }}
+        >
+                    <AgGridReact
+                        rowData={topGridRows}
+                        columnDefs={topGridColumnDefs}
+            defaultColDef={defaultColDef}
+                        headerHeight={48}
+            rowHeight={40}
+                        suppressMovableColumns={true}
+                        suppressMenuHide={true}
+                        suppressCellFocus={true}
+            theme={"legacy"}
+                        enableCellTextSelection={true}
+                        suppressHorizontalScroll={true}
+                        suppressColumnVirtualisation={true}
+                        suppressRowVirtualisation={true}
+                    />
+                </div>
+        <div className="mt-0 mb-3">
+          <ControlsRowCell data={{ isControlRow: true }} />
+        </div>
+
+                {showCurrencyWarning && (
+          <div className="alert alert-warning mb-3" role="alert">
+            <strong>Attention :</strong> Les 2 devises doivent être identique.
+                    </div>
+                )}
+            <p className="text-muted mb-2">Nombre de deals: {totalDeals}</p>
+            {loading ? (
+                <div className="text-center my-5">Chargement des données...</div>
+            ) : (
+          <div className="ag-theme-alpine" style={{ width: "100%", height: "390px" }}>
+                <AgGridReact
+                    rowData={expandedDealsData}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    autoGroupColumnDef={autoGroupColumnDef}
+                    headerHeight={48}
+                    pagination={true}
+                    paginationPageSize={10}
+                    enableBrowserTooltips={true}
+                    rowSelection="single"
+                    rowHeight={50}
+              theme={"legacy"}
+                    gridOptions={gridOptions}
+                    suppressHorizontalScroll={true}
+                    suppressColumnVirtualisation={true}
+                    suppressRowVirtualisation={true}
+                />
+            </div>
+            )}
+        </Container>
+        </>
+    );
+};
+
+export default DealsTable;
