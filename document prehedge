@@ -75,3 +75,35 @@ After editing, start the server using . start-prehedging-api.sh.
 Check if the server is running and verify that the application works correctly.
 
 Note: Always ensure the correct file paths and names before starting the server to avoid issues.
+
+
+
+Step: Upload Certificate File via WinSCP
+
+Open WinSCP and connect to the remote server (do not use SSH this time).
+
+In WinSCP, there are two panels: left (local) and right (remote).
+
+On the right (remote) side, go to the home folder → TMP.
+
+Create a new folder with your name inside TMP. Set permissions 777 (read, write, execute all).
+
+On the left (local) side, go to Downloads → Users → [Your Account] → YC → Users → [Your Name] → Downloads.
+
+Locate the downloaded certificate file (pre-hedging-dev.yl).
+
+Drag and drop this file from the left panel to the folder you created on the right panel inside TMP.
+
+Switch to the remote server. Navigate to your new folder (e.g., 20250925).
+
+Copy the PEM file using:
+
+cp /tmp/[your-name]/pre-h<TAB>
+
+
+Give full access to all files in the folder:
+
+chmod 777 *
+
+
+Now all files have the correct permissions
