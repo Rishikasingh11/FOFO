@@ -50,3 +50,28 @@ Certificate and Key Creation Process (Pre-Hedging API)
 5. Click Submit.
 6. After submission, there will be an option for Generate.
    - Clicking this will generate the required certificate files.
+
+
+Check and Update Script Path
+
+Ensure the application script points to the new certificate, not the old one.
+
+Go to the scripts folder.
+
+Open bi start-prehedging-api.sh using vi editor.
+
+Change the path to the new certificate (e.g., /20250925).
+
+Do not change anything else in the script.
+
+Save changes (Ctrl + S) and exit the editor.
+
+Restart Server and Verify
+
+Stop the server before making any changes.
+
+After editing, start the server using . start-prehedging-api.sh.
+
+Check if the server is running and verify that the application works correctly.
+
+Note: Always ensure the correct file paths and names before starting the server to avoid issues.
