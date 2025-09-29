@@ -1,0 +1,52 @@
+Certificate and Key Creation Process (Pre-Hedging API)
+1. Login to CyberArk and Connect to Remote Server
+1. Open CyberArk application.
+2. Connect to the target server via SSH session.
+3. Once connected, switch to the prehedge user account:
+   sudo su-prehedge
+2. Navigate to Configuration Directory
+1. Go to the prehedge_api/config folder:
+   cd /prehedge_api/config
+2. Create a new folder with today’s date (format: YYYYMMDD). Example:
+   mkdir 20250925
+3. Move into the new folder:
+   cd 20250925
+3. Copy and Rename Configuration File
+1. List available files:
+   ll
+2. Copy the csr_config.conf into the new folder:
+   cp csr_config.conf 20250925/
+3. Go inside the new folder:
+   cd 20250925
+4. Rename the copied config file:
+   mv csr_config.conf csr_prehedge_dev_config.conf
+4. Generate Certificate Signing Request (CSR) and Key
+1. Run the OpenSSL command to generate key and CSR:
+   openssl req -config csr_prehedge_dev_config.conf \
+   -new -keyout prehedging-dev.lu.world.socgen.key \
+   -out prehedging-dev.lu.world.socgen.csr
+
+   - .key → Private Key file
+   - .csr → Certificate Signing Request
+
+2. Password Prompt
+- During CSR/Key generation, you may be asked for a password.
+- To find the correct password:
+   cd /prehedge_api/script
+   cat start-prehedging-api.sh
+- Inside this script, you will find the password.
+- Usually, the pre-hedging application password is: pre-hedge (all small letters).
+
+3. After the command runs, verify CSR content:
+   cat prehedging-dev.lu.world.socgen.csr
+   The CSR should display starting with:
+   -----BEGIN CERTIFICATE REQUEST----- ... -----END CERTIFICATE REQUEST-----
+5. Submit CSR on DoItNow Portal
+1. Copy the CSR output.
+2. Open the DoItNow portal.
+3. Click on Import or Generate.
+4. Fill in the required details.
+   - For the email field, provide the given official email ID.
+5. Click Submit.
+6. After submission, there will be an option for Generate.
+   - Clicking this will generate the required certificate files.
