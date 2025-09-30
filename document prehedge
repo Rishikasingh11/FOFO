@@ -107,3 +107,130 @@ chmod 777 *
 
 
 Now all files have the correct permissions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Backup (Preparation)
+
+Description: Backup existing certificates and configs.
+
+Long Description:
+
+mkdir -p /backup/certificates/$(date +%Y%m%d)
+cp /path/to/current/certs/* /backup/certificates/$(date +%Y%m%d)/
+
+
+Verify backup has .pem, .key, .p12, and config scripts.
+
+2. Implementation
+
+Description: Deploy new certificates and update configurations.
+
+Long Description (Step-by-Step with Commands):
+
+a) Login & Setup
+
+# Login to CyberArk → connect to server via SSH
+sudo su - prehedge
+cd /prehedge_api/config
+mkdir 20250925
+cd 20250925
+
+
+b) Copy Config & Generate CSR + Key
+
+cp ../csr_config.conf ./csr_prehedge_dev_config.conf
+
+openssl req -config csr_prehedge_dev_config.conf \
+-new -keyout prehedging-dev.lu.world.socgen.key \
+-out prehedging-dev.lu.world.socgen.csr
+
+
+.key = private key
+
+.csr = certificate signing request
+
+c) Verify CSR Content
+
+cat prehedging-dev.lu.world.socgen.csr
+
+
+d) Submit CSR on DoItNow Portal
+
+Copy CSR output → Import → Fill details → Submit → Generate.
+
+Download generated .pem certificate.
+
+e) Upload PEM via WinSCP
+
+Connect with WinSCP (not SSH).
+
+Remote path: /home/tmp/<yourname> (create folder with 777 permission).
+
+Local path: Downloads → Users → YC → Users → <YourName> → Downloads.
+
+Drag & drop downloaded .pem to remote folder.
+
+f) Copy PEM to Cert Path
+
+cp /tmp/<yourname>/pre-hedging-dev.pem /path/to/prod/certs/
+chmod 777 /path/to/prod/certs/*
+
+
+g) Generate P12 File
+
+openssl pkcs12 -export -in pre-hedging-dev.pem \
+-inkey prehedging-dev.lu.world.socgen.key \
+-out prehedging-dev.p12
+
+
+(Check filenames before executing)
+
+h) Update Script Path
+
+cd /prehedge_api/script
+vi start-prehedging-api.sh
+# Update cert path → /20250925
+# Save & exit
+
+3. Post-Execution (Validation)
+
+Description: Restart server & validate.
+
+Long Description:
+
+./stop-prehedging-api.sh
+./start-prehedging-api.sh
+
+
+Confirm server is running.
+
+Validate application & data flow. (Mobina to do sanity check).
+
+4. Rollback
+
+Description: Restore old certs if issues occur.
+
+Long Description:
+
+./stop-prehedging-api.sh
+cp /backup/certificates/<backup-date>/* /path/to/prod/certs/
+vi start-prehedging-api.sh   # point back to old cert path
+./start-prehedging-api.sh
+
+
+Validate app with old certificate.
+
+Notify stakeholders rollback executed.
