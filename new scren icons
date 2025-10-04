@@ -1,0 +1,23 @@
+
+import {
+    ExclamationTriangleFill,
+    XOctagonFill,
+    PlusSquare,
+    PencilSquare
+} from 'react-bootstrap-icons';
+
+
+
+
+<Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1">
+                        <div className="icon-red-square">
+                            <span className="icon-plus">+</span>
+                        </div>
+                        <span>Saisir un écart</span>
+                    </Button>
+                    <Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1">
+                        <div className="icon-orange-square">
+                            <span className="icon-checkmark">✓</span>
+                        </div>
+                        <span>Modifier un écart</span>
+                    </Button>
