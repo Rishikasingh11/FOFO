@@ -21,3 +21,55 @@ import {
                         </div>
                         <span>Modifier un écart</span>
                     </Button>
+
+
+
+
+
+/* Custom icon styles for toolbar buttons - extra bold and prominent */
+.icon-red-square {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 3px solid #dc3545;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.icon-orange-square {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 3px solid #fd7e14;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.icon-plus {
+  color: #dc3545;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.icon-checkmark {
+  color: #fd7e14;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* Red styling for suppression button to match other buttons */
+.icon-suppression {
+  color: #dc3545 !important;
+}
+
+
+
+
+<Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1"><XOctagonFill className="icon-suppression" /> <span>Suppression de l'orphelin</span></Button>
+      
