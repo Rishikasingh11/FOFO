@@ -1,16 +1,29 @@
-  <Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1">
-                        <span className="d-inline-flex align-items-center justify-content-center border border-2 border-danger rounded-1 bg-white me-1" style={{ width: 18, height: 18, lineHeight: 1 }}>
-                            <span className="text-danger fw-bold" style={{ fontSize: 12 }}>+</span>
-                        </span>
-                        <span>Saisir un écart</span>
-                    </Button>
-                    <Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1">
-                        <span className="d-inline-flex align-items-center justify-content-center border border-2 border-warning rounded-1 bg-white me-1" style={{ width: 18, height: 18, lineHeight: 1 }}>
-                            <span className="text-warning fw-bold" style={{ fontSize: 12 }}>✓</span>
-                        </span>
-                        <span>Modifier un écart</span>
-                    </Button>
-                    <Button variant="link" className="text-decoration-none text-secondary p-0 d-flex align-items-center gap-1">
-                        <XOctagonFill className="text-danger" />
-                        <span>Suppression de l'orphelin</span>
-                    </Button>
+ {
+            headerName: 'Type',
+            field: 'type',
+            rowSpan: (params) => (params.node.rowIndex % 2 === 0 ? 2 : 1),
+            cellRenderer: (params) => {
+                if (params.node.rowIndex % 2 !== 0) return '';
+                const parts = (params.value || '').split(' ');
+                const typeCode = parts[0] || '';
+                return (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',   // ✅ add this
+                        height: '100%',
+                        width: '100%',               // ✅ ensures full width coverage
+                        textAlign: 'center'          // ✅ fallback for text
+                    }}>
+                        <span>{typeCode}</span>
+                    </div>
+                );
+            },
+            
+            cellClassRules: {
+                'cell-span': (params) => params.node.rowIndex % 2 === 0,
+            },
+            maxWidth: 100,
+            cellClass: 'd-flex align-items-center',
+            cellStyle: { display: 'flex', alignItems: 'center' },
+        },
