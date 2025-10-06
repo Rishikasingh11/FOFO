@@ -1,11 +1,13 @@
-{
+ {
             headerName: 'Type',
             field: 'type',
             rowSpan: () => 2,
-            cellClass: ['text-center', 'd-flex', 'align-items-center', 'justify-content-center', 'w-100', 'py-3'],
+            // Bootstrap utilities for centering and spacing (no colors)
+            cellClass: ['text-center', 'd-flex', 'align-items-center', 'justify-content-center', 'w-100', 'pt-3'],
+            // Keep class names for potential hooks, but no colors applied
             cellClassRules: {
-                'bg-light': (params) => params.node.rowIndex % 4 < 2,
-                'bg-white': (params) => params.node.rowIndex % 4 >= 2,
+                'cell-span-even': (params) => params.node.rowIndex % 4 < 2,
+                'cell-span-odd': (params) => params.node.rowIndex % 4 >= 2,
             },
             cellRenderer: (params) => {
                 if (params.node.rowIndex % 2 !== 0) return '';
