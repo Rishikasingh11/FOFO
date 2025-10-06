@@ -1,4 +1,4 @@
- {
+{
             headerName: 'Actions',
             field: 'id',
             minWidth: 100,
@@ -9,17 +9,17 @@
             cellRenderer: (p) => {
                 if (p.node.rowIndex % 2 !== 0) return '';
                 // Mirror Type column vertical positioning so the icon sits between the two rows
-                return (
+                    return (
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', height: '100%', paddingTop: 18 }}>
                         <Button
                             variant="link"
                             className="p-0"
-                            onClick={() => alert(`Suppression for group starting at ID: ${p.data.id}`)}
+                            onClick={() => { window.confirm('Voulez-vous supprimer le matching de ces 2 deals ?'); }}
                             title="Suppression de l'orphelin"
                             aria-label="Suppression de l'orphelin"
                         >
                             <XOctagonFill className="text-danger" size={16} />
-                        </Button>
-                    </div>
-                );
+                            </Button>
+                        </div>
+                    );
             },
