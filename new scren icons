@@ -1,29 +1,21 @@
- {
+{
             headerName: 'Type',
             field: 'type',
-            rowSpan: (params) => (params.node.rowIndex % 2 === 0 ? 2 : 1),
+            rowSpan: () => 2,
+            cellClass: ['text-center', 'd-flex', 'align-items-center', 'justify-content-center', 'w-100', 'py-3'],
+            cellClassRules: {
+                'bg-light': (params) => params.node.rowIndex % 4 < 2,
+                'bg-white': (params) => params.node.rowIndex % 4 >= 2,
+            },
             cellRenderer: (params) => {
                 if (params.node.rowIndex % 2 !== 0) return '';
-                const parts = (params.value || '').split(' ');
-                const typeCode = parts[0] || '';
+                const code = (params.value || '').split(' ')[0] || '';
                 return (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',   // ✅ add this
-                        height: '100%',
-                        width: '100%',               // ✅ ensures full width coverage
-                        textAlign: 'center'          // ✅ fallback for text
-                    }}>
-                        <span>{typeCode}</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', height: '100%', paddingTop: 13 }}>
+                        <span>{code}</span>
                     </div>
                 );
             },
-            
-            cellClassRules: {
-                'cell-span': (params) => params.node.rowIndex % 2 === 0,
-            },
             maxWidth: 100,
-            cellClass: 'd-flex align-items-center',
-            cellStyle: { display: 'flex', alignItems: 'center' },
+            sortable: true,
         },
