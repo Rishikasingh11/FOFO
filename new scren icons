@@ -1,29 +1,25 @@
-{
-            headerName: 'Office',
-            field: 'office',
+ {
+            headerName: 'Actions',
+            field: 'id',
             minWidth: 100,
             flex: 1,
-            valueGetter: (p) => p.data?.office ?? (p.node.rowIndex % 2 === 0 ? 'B' : 'F'),
-        },
-
-
-
-[
-  { "id": "3715012", "type": "TT B A", "office": "B", "reference": "3715012", "contrepartie": "70923456", "dateValeur": "30 Sep 2024", "montantAchat": "60,000.00 GBP N", "montantVendu": "69,000.00 EUR", "coursClient": "1.15", "montantBaseAchat": "60,000.00", "montantBaseVendu": "69,000.00", "coursBase": "1.1500", "etatDateImport": "30/09/24\n0 - \n[1915012]" },
-  { "id": "3715013", "type": "CC F A", "office": "F", "reference": "3715013", "contrepartie": "70934567", "dateValeur": "01 Oct 2024", "montantAchat": "12,000.00 EUR", "montantVendu": "12,960.00 USD", "coursClient": "1.08", "montantBaseAchat": "12,000.00", "montantBaseVendu": "12,960.00", "coursBase": "1.0800", "etatDateImport": "01/10/24\n0 - \n[1915013]" },
-  { "id": "3715014", "type": "TT B C", "office": "B", "reference": "3715014", "contrepartie": "70945678", "dateValeur": "01 Oct 2024", "montantAchat": "40,000.00 GBP N", "montantVendu": "46,000.00 EUR", "coursClient": "1.15", "montantBaseAchat": "40,000.00", "montantBaseVendu": "46,000.00", "coursBase": "1.1500", "etatDateImport": "01/10/24\n0 - \n[1915014]" },
-  { "id": "3715015", "type": "GC F M", "office": "F", "reference": "3715015", "contrepartie": "70956789", "dateValeur": "01 Oct 2024", "montantAchat": "95,000.00 CHF", "montantVendu": "99,750.00 EUR", "coursClient": "1.05", "montantBaseAchat": "95,000.00", "montantBaseVendu": "99,750.00", "coursBase": "1.0500", "etatDateImport": "01/10/24\n0 - \n[1915015]" },
-  { "id": "3715016", "type": "SW B A", "office": "B", "reference": "3715016", "contrepartie": "70967890", "dateValeur": "01 Oct 2024", "montantAchat": "180,000.00 EUR", "montantVendu": "190,800.00 USD", "coursClient": "1.06", "montantBaseAchat": "180,000.00", "montantBaseVendu": "190,800.00", "coursBase": "1.0600", "etatDateImport": "01/10/24\n0 - \n[1915016]" },
-  { "id": "3715017", "type": "TF F C", "office": "F", "reference": "3715017", "contrepartie": "70978901", "dateValeur": "01 Oct 2024", "montantAchat": "22,000.00 EUR", "montantVendu": "24,200.00 USD", "coursClient": "1.10", "montantBaseAchat": "22,000.00", "montantBaseVendu": "24,200.00", "coursBase": "1.1000", "etatDateImport": "01/10/24\n0 - \n[1915017]" },
-  { "id": "3715018", "type": "CC B M", "office": "B", "reference": "3715018", "contrepartie": "70989012", "dateValeur": "01 Oct 2024", "montantAchat": "7,250.00 EUR", "montantVendu": "7,540.00 USD", "coursClient": "1.04", "montantBaseAchat": "7,250.00", "montantBaseVendu": "7,540.00", "coursBase": "1.0400", "etatDateImport": "01/10/24\n0 - \n[1915018]" },
-  { "id": "3715019", "type": "TT F A", "office": "F", "reference": "3715019", "contrepartie": "70990123", "dateValeur": "01 Oct 2024", "montantAchat": "55,000.00 GBP N", "montantVendu": "63,250.00 EUR", "coursClient": "1.15", "montantBaseAchat": "55,000.00", "montantBaseVendu": "63,250.00", "coursBase": "1.1500", "etatDateImport": "01/10/24\n0 - \n[1915019]" },
-  { "id": "3715020", "type": "GC B A", "office": "B", "reference": "3715020", "contrepartie": "71001234", "dateValeur": "01 Oct 2024", "montantAchat": "130,000.00 CHF", "montantVendu": "136,500.00 EUR", "coursClient": "1.05", "montantBaseAchat": "130,000.00", "montantBaseVendu": "136,500.00", "coursBase": "1.0500", "etatDateImport": "01/10/24\n0 - \n[1915020]" },
-  { "id": "3715021", "type": "SW F M", "office": "F", "reference": "3715021", "contrepartie": "71012345", "dateValeur": "01 Oct 2024", "montantAchat": "210,000.00 EUR", "montantVendu": "222,600.00 USD", "coursClient": "1.06", "montantBaseAchat": "210,000.00", "montantBaseVendu": "222,600.00", "coursBase": "1.0600", "etatDateImport": "01/10/24\n0 - \n[1915021]" },
-  { "id": "3715022", "type": "TF B A", "office": "B", "reference": "3715022", "contrepartie": "71023456", "dateValeur": "01 Oct 2024", "montantAchat": "18,000.00 EUR", "montantVendu": "19,800.00 USD", "coursClient": "1.10", "montantBaseAchat": "18,000.00", "montantBaseVendu": "19,800.00", "coursBase": "1.1000", "etatDateImport": "01/10/24\n0 - \n[1915022]" },
-  { "id": "3715023", "type": "CC F A", "office": "F", "reference": "3715023", "contrepartie": "71034567", "dateValeur": "01 Oct 2024", "montantAchat": "10,500.00 EUR", "montantVendu": "11,025.00 USD", "coursClient": "1.05", "montantBaseAchat": "10,500.00", "montantBaseVendu": "11,025.00", "coursBase": "1.0500", "etatDateImport": "01/10/24\n0 - \n[1915023]" },
-  { "id": "3715024", "type": "TT B M", "office": "B", "reference": "3715024", "contrepartie": "71045678", "dateValeur": "01 Oct 2024", "montantAchat": "32,000.00 GBP N", "montantVendu": "36,800.00 EUR", "coursClient": "1.15", "montantBaseAchat": "32,000.00", "montantBaseVendu": "36,800.00", "coursBase": "1.1500", "etatDateImport": "01/10/24\n0 - \n[1915024]" },
-  { "id": "3715025", "type": "GC F A", "office": "F", "reference": "3715025", "contrepartie": "71056789", "dateValeur": "01 Oct 2024", "montantAchat": "85,000.00 CHF", "montantVendu": "89,250.00 EUR", "coursClient": "1.05", "montantBaseAchat": "85,000.00", "montantBaseVendu": "89,250.00", "coursBase": "1.0500", "etatDateImport": "01/10/24\n0 - \n[1915025]" },
-  { "id": "3715026", "type": "SW B C", "office": "B", "reference": "3715026", "contrepartie": "71067890", "dateValeur": "01 Oct 2024", "montantAchat": "175,000.00 EUR", "montantVendu": "185,500.00 USD", "coursClient": "1.06", "montantBaseAchat": "175,000.00", "montantBaseVendu": "185,500.00", "coursBase": "1.0600", "etatDateImport": "01/10/24\n0 - \n[1915026]" },
-  { "id": "3715027", "type": "TF F M", "office": "F", "reference": "3715027", "contrepartie": "71078901", "dateValeur": "01 Oct 2024", "montantAchat": "20,000.00 EUR", "montantVendu": "22,000.00 USD", "coursClient": "1.10", "montantBaseAchat": "20,000.00", "montantBaseVendu": "22,000.00", "coursBase": "1.1000", "etatDateImport": "01/10/24\n0 - \n[1915027]" },
-  { "id": "3715028", "type": "CC B A", "office": "B", "reference": "3715028", "contrepartie": "71089012", "dateValeur": "01 Oct 2024", "montantAchat": "6,400.00 EUR", "montantVendu": "6,720.00 USD", "coursClient": "1.05", "montantBaseAchat": "6,400.00", "montantBaseVendu": "6,720.00", "coursBase": "1.0500", "etatDateImport": "01/10/24\n0 - \n[1915028]" }
-]
+            cellClass: 'action-cell',
+            // span Actions exactly like Type: one icon per 2-row block
+            rowSpan: (p) => (p.node.rowIndex % 2 === 0 ? 2 : 1),
+            cellRenderer: (p) => {
+                if (p.node.rowIndex % 2 !== 0) return '';
+                // Mirror Type column vertical positioning so the icon sits between the two rows
+                return (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', height: '100%', paddingTop: 18 }}>
+                        <Button
+                            variant="link"
+                            className="p-0"
+                            onClick={() => alert(`Suppression for group starting at ID: ${p.data.id}`)}
+                            title="Suppression de l'orphelin"
+                            aria-label="Suppression de l'orphelin"
+                        >
+                            <XOctagonFill className="text-danger" size={16} />
+                        </Button>
+                    </div>
+                );
+            },
