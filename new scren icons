@@ -1,25 +1,250 @@
-{
-            headerName: 'Actions',
-            field: 'id',
-            minWidth: 100,
-            flex: 1,
-            cellClass: 'action-cell',
-            // span Actions exactly like Type: one icon per 2-row block
-            rowSpan: (p) => (p.node.rowIndex % 2 === 0 ? 2 : 1),
-            cellRenderer: (p) => {
-                if (p.node.rowIndex % 2 !== 0) return '';
-                // Mirror Type column vertical positioning so the icon sits between the two rows
-                    return (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', height: '100%', paddingTop: 18 }}>
-                        <Button
-                            variant="link"
-                            className="p-0"
-                            onClick={() => { window.confirm('Voulez-vous supprimer le matching de ces 2 deals ?'); }}
-                            title="Suppression de l'orphelin"
-                            aria-label="Suppression de l'orphelin"
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import { ModuleRegistry } from 'ag-grid-community';
+import { ClientSideRowModelModule, ColumnAutoSizeModule } from 'ag-grid-community';
+
+ModuleRegistry.registerModules([
+    ClientSideRowModelModule,
+    ColumnAutoSizeModule,
+]);
+
+const OperationMatchesModel = ({ show, onHide, row, onSubmit }) => {
+    const [selectedDeal1, setSelectedDeal1] = useState(null);
+    const [selectedDeal2, setSelectedDeal2] = useState(null);
+    const [justificatif, setJustificatif] = useState('[Sélectionner un justificatif]');
+    const [commentaire, setCommentaire] = useState('');
+
+    const justificatifOptions = [
+        '[Sélectionner un justificatif]',
+        'deal présent en FO mais absent en BO',
+        'deal présent en BO mais absent en FO',
+        'erreur de sens',
+        'marge négative',
+        'erreur de cours',
+        'divers',
+        'tickets FO saisi sans marge',
+        'orphelin FO non justifié',
+        'écart de montants entre FO et BO',
+        'CAT avec spot de couverture à une patte nulle',
+        'matching manuel sans écart',
+        'rompu sur ordre groupé',
+        'insert/delete pour insérer les données clients',
+    ];
+
+    // Top grid rows for selected deals
+    const topGridRows = useMemo(() => [
+        selectedDeal1 ? { ...selectedDeal1, id: 'slot1', isControlRow: false } : {
+            id: 'placeholder-1',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        },
+        selectedDeal2 ? { ...selectedDeal2, id: 'slot2', isControlRow: false } : {
+            id: 'placeholder-2',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        }
+    ], [selectedDeal1, selectedDeal2]);
+
+    const highlightDiff = (field) => {
+        if (!selectedDeal1 || !selectedDeal2) return false;
+        if (selectedDeal1.id === selectedDeal2.id) return false;
+        return selectedDeal1[field] !== selectedDeal2[field];
+    };
+
+    const topGridColumnDefs = useMemo(() => [
+        {
+            headerName: '',
+            field: 'radioButtons',
+            minWidth: 60,
+            flex: 0.3,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const isFirstRow = params.data.id === 'slot1' || params.data.id === 'placeholder-1';
+                const isSecondRow = params.data.id === 'slot2' || params.data.id === 'placeholder-2';
+                if (!isFirstRow && !isSecondRow) return null;
+                const number = isFirstRow ? '1' : '2';
+                return (
+                    <div className="d-flex align-items-center justify-content-center w-100 h-100">
+                        <div 
+                            className="d-flex align-items-center justify-content-center rounded-circle border border-2 border-primary bg-white text-primary fw-bold"
+                            style={{ width: '24px', height: '24px', fontSize: '12px' }}
                         >
-                            <XOctagonFill className="text-danger" size={16} />
-                            </Button>
+                            {number}
                         </div>
-                    );
+                    </div>
+                );
             },
+        },
+        {
+            headerName: 'Type',
+            field: 'type',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('type') ? 'bg-danger bg-opacity-25' : ''}>{parts[0] || ''}</span>;
+            },
+        },
+        {
+            headerName: 'Office',
+            field: 'office',
+            minWidth: 120,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('office') ? 'bg-danger bg-opacity-25' : ''}>{parts.slice(1).join(' ')}</span>;
+            }
+        },
+        { headerName: 'Reference', field: 'reference', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('reference') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Contrepartie', field: 'contrepartie', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('contrepartie') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Date de Valeur', field: 'dateValeur', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('dateValeur') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Montant Achat', field: 'montantAchat', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantAchat') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        {
+            headerName: 'Montant Vendu',
+            field: 'montantVendu',
+            minWidth: 180,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                return (
+                    <span
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', width: '100%' }}
+                        title={params.value}
+                        className={highlightDiff('montantVendu') ? 'bg-danger bg-opacity-25' : ''}
+                    >
+                        {params.value}
+                    </span>
+                );
+            },
+        },
+        { headerName: 'Cours client', field: 'coursClient', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('coursClient') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Montant de base Achat', field: 'montantBaseAchat', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantBaseAchat') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Montant de base Vendu', field: 'montantBaseVendu', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('montantBaseVendu') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: 'Cours base', field: 'coursBase', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('coursBase') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+        { headerName: "Date d'import", field: 'etatDateImport', minWidth: 120, flex: 1, cellRenderer: (params) => params.data.isControlRow ? null : <span className={highlightDiff('etatDateImport') ? 'bg-danger bg-opacity-25' : ''}>{params.value}</span> },
+    ], [selectedDeal1, selectedDeal2]);
+
+    const handleCreateMatch = () => {
+        if (!selectedDeal1 || !selectedDeal2) {
+            alert("Veuillez sélectionner deux deals pour le matching.");
+            return;
+        }
+        if (selectedDeal1.reference === selectedDeal2.reference) {
+            alert("Les 2 deals doivent être différents.");
+            return;
+        }
+        if (selectedDeal1.id === selectedDeal2.id) {
+            if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
+                alert("Le matching est déjà créé.");
+            }
+            return;
+        }
+        if (window.confirm("Voulez-vous creer un 'matching' manuel pour les 2 deals ?")) {
+            // Handle matching creation
+            console.log('Creating match with:', { selectedDeal1, selectedDeal2, justificatif, commentaire });
+        }
+    };
+
+    const handleClearSelection = () => {
+        setSelectedDeal1(null);
+        setSelectedDeal2(null);
+        setCommentaire('');
+        setJustificatif('[Sélectionner un justificatif]');
+    };
+
+    const isCreateEnabled = justificatif !== '[Sélectionner un justificatif]' && commentaire.trim() !== '';
+
+    return (
+        <Modal show={show} onHide={onHide} centered size="xl">
+            <Modal.Header closeButton>
+                <Modal.Title>Paramétrage de l'écart</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {/* Top Grid */}
+                <div className="ag-theme-alpine" style={{ width: '100%', height: '120px', marginBottom: '16px' }}>
+                    <AgGridReact
+                        rowData={topGridRows}
+                        columnDefs={topGridColumnDefs}
+                        defaultColDef={{ resizable: true, flex: 1 }}
+                        headerHeight={38}
+                        rowHeight={40}
+                        suppressMovableColumns={true}
+                        suppressMenuHide={true}
+                        suppressCellFocus={true}
+                        theme={'legacy'}
+                        enableCellTextSelection={true}
+                        suppressHorizontalScroll={true}
+                        suppressColumnVirtualisation={true}
+                        suppressRowVirtualisation={true}
+                    />
+                </div>
+
+                {/* Justification and Comment Section */}
+                <div className="bg-light p-3 rounded border">
+                    <Row className="mb-3">
+                        <Col md={4}>
+                            <Form.Label className="fw-bold mb-1">Justificatif :</Form.Label>
+                            <Form.Select
+                                value={justificatif}
+                                onChange={(e) => setJustificatif(e.target.value)}
+                            >
+                                {justificatifOptions.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </Form.Select>
+                        </Col>
+                        <Col md={8}>
+                            <Form.Label className="fw-bold mb-1">Commentaire :</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={3}
+                                placeholder="Commentaire"
+                                value={commentaire}
+                                onChange={(e) => setCommentaire(e.target.value)}
+                                style={{ resize: 'vertical' }}
+                            />
+                            <div className="text-muted small mt-1">
+                                {255 - commentaire.length} restant(s)
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onHide}>
+                    Annuler
+                </Button>
+                <Button variant="primary" onClick={onSubmit}>
+                    Sauvegarder
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+};
+
+export default OperationMatchesModel;
