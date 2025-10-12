@@ -248,3 +248,92 @@ const OperationMatchesModel = ({ show, onHide, row, onSubmit }) => {
 };
 
 export default OperationMatchesModel;
+
+
+
+
+
+
+
+
+
+
+
+
+  },
+        {
+            id: 'placeholder-3',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        },
+        {
+            id: 'placeholder-4',
+            type: '',
+            reference: '',
+            contrepartie: '',
+            dateValeur: '',
+            montantAchat: '',
+            montantVendu: '<Sélectionner une ligne>',
+            coursClient: '',
+            montantBaseAchat: '',
+            montantBaseVendu: '',
+            coursBase: '',
+            etatDateImport: '',
+            isControlRow: false,
+        }
+
+
+
+
+
+
+
+
+
+
+
+ {
+            headerName: 'Office',
+            field: 'office',
+            minWidth: 80,
+            flex: 1,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                const parts = (params.data.type || '').split(' ');
+                return <span className={highlightDiff('office') ? 'bg-danger bg-opacity-25' : ''}>{parts.slice(1).join(' ')}</span>;
+            }
+        },
+        {
+            headerName: '',
+            field: 'radioButtons',
+            minWidth: 60,
+            flex: 0.3,
+            cellRenderer: (params) => {
+                if (params.data.isControlRow) return null;
+                
+                // Show radio button for all rows (1, 2, 3, 4)
+                const radioNumber = params.node.rowIndex + 1;
+                
+                return (
+                    <div className="d-flex align-items-center justify-content-center w-100 h-100">
+                        <div 
+                            className="d-flex align-items-center justify-content-center rounded-circle border border-2 border-primary bg-white text-primary fw-bold"
+                            style={{ width: '24px', height: '24px', fontSize: '12px' }}
+                        >
+                            {radioNumber}
+                        </div>
+                    </div>
+                );
+            },
+        },
+       
