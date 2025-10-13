@@ -336,4 +336,72 @@ export default OperationMatchesModel;
                 );
             },
         },
-       
+
+
+
+
+gridfile chnage
+
+
+ const handleAddEcart = (pairData) => {
+        setSelectedRow(pairData);
+        setShowEcartModal(true);
+    };
+
+    const handleClick = () => {
+                    // Get the specific pair based on ID
+                    const currentRow = params.data; // This is B data
+                    const currentIndex = dealsData.findIndex(deal => deal.id === currentRow.id);
+                    const nextRow = dealsData[currentIndex + 1]; // Get the next row (F data)
+                    
+                    console.log('Current row (B):', currentRow);
+                    console.log('Current index:', currentIndex);
+                    console.log('Next row (F):', nextRow);
+                    console.log('dealsData length:', dealsData.length);
+                    
+                    const pairData = [currentRow, nextRow].filter(Boolean);
+                    console.log('Pair data:', pairData);
+                    
+                    // Pass the pair data to modal
+                    handleAddEcart(pairData);    
+
+            {/* Ecart Modal */}
+            <OperationMatchesModel
+                show={showEcartModal}
+                onHide={handleCloseEcart}
+                pairData={selectedRow}
+                onSubmit={handleSubmitEcart}
+            />
+        </Container>
+
+
+modal chnages
+
+1.Const OperationMatchesModel = ({ show, onHide, pairData, onSubmit }) => {
+2.// Top grid rows for selected pair
+    const topGridRows = useMemo(() => {
+        if (!pairData || pairData.length === 0) return [];
+        
+        // Get B and F data from the pair
+        const bData = pairData[0]; // First row (B)
+        const fData = pairData[1]; // Second row (F)
+        
+        console.log('pairData received:', pairData);
+        console.log('bData:', bData);
+        console.log('fData:', fData);
+        
+        return [
+            // Row 1: B data (original)
+            { ...bData, id: 'row1', isControlRow: false },
+            // Row 2: B data (editable)
+            { ...bData, id: 'row2', isControlRow: false, isEditable: true },
+            // Row 3: F data (original) - only if fData exists
+            fData ? { ...fData, id: 'row3', isControlRow: false } : { id: 'row3', isControlRow: false },
+            // Row 4: F data (editable) - only if fData exists
+            fData ? { ...fData, id: 'row4', isControlRow: false, isEditable: true } : { id: 'row4', isControlRow: false, isEditable: true }
+        ];
+    }, [pairData]);
+
+
+
+
