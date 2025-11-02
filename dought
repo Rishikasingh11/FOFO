@@ -5,3 +5,19 @@ Here are 5 concise, business-appropriate questions to clarify the requirements f
 3. In the first grid, on what basis are the rows marked for attention or highlighted — is it based on exception, mismatch, or status?
 4. Why are only six rows visible — is there a fixed row limit or is it data-driven?
 5. Is the data being grouped or sorted in any specific order before the highlights and totals are applied?
+
+
+ defaultColDef={{ 
+                            resizable: true, 
+                            flex: 1,
+                            wrapHeaderText: true,
+                            autoHeaderHeight: true,
+                            headerClass: 'text-wrap text-break text-start justify-content-start align-items-start fw-bold'
+                        }}
+
+
+ autoSize: true,
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+        headerClass: 'text-wrap text-break text-start justify-content-start align-items-start fw-bold'
+   
